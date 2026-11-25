@@ -1,0 +1,12 @@
+
+audio/
+model1/
+model2/
+model3/
+previews/
+subway-preview.html
+.claude/
+subways/*.svg
+subways/*.png
+
+_shot.html

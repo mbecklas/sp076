@@ -1,0 +1,122 @@
+Metro maps downloaded from Wikimedia Commons (commons.wikimedia.org).
+Keep this file with the maps: the licences require crediting each author.
+
+01-paris.svg
+  Title:   Carte Métro de Paris.svg
+  Author:  Rigil
+  Licence: CC BY 3.0 https://creativecommons.org/licenses/by/3.0
+  Source:  https://commons.wikimedia.org/wiki/File:Carte_M%C3%A9tro_de_Paris.svg
+
+02-milan.svg
+  Title:   Milano - mappa rete metropolitana (schematica).svg
+  Author:  Arbalete
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Milano_-_mappa_rete_metropolitana_(schematica).svg
+
+04-lyon.svg
+  Title:   Carte Métro Lyon (2024).svg
+  Author:  Chabe01
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Carte_M%C3%A9tro_Lyon_(2024).svg
+
+06-rome.svg
+  Title:   Roma - mappa metropolitana 2025 (schematica).svg
+  Author:  Basso Leonardo
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Roma_-_mappa_metropolitana_2025_(schematica).svg
+
+08-stockholm.svg
+  Title:   Stockholm metrosystem map.svg
+  Author:  user:xyboi, redraw by Stonyyy
+  Licence: CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0
+  Source:  https://commons.wikimedia.org/wiki/File:Stockholm_metrosystem_map.svg
+
+09-helsinki.svg
+  Title:   Helsinki Region rail transport w plans.svg
+  Author:  Jyri Lehtinen aka. Oghmoir
+  Licence: CC BY-SA 3.0 http://creativecommons.org/licenses/by-sa/3.0/
+  Source:  https://commons.wikimedia.org/wiki/File:Helsinki_Region_rail_transport_w_plans.svg
+
+10-rotterdam.svg
+  Title:   Liniennetz Metro Rotterdam.svg
+  Author:  Wiesenpinguin
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Liniennetz_Metro_Rotterdam.svg
+
+11-sao-paulo.png
+  Title:   Mapa do Metrô de São Paulo em escala.png
+  Author:  Eliezer Santos
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Mapa_do_Metr%C3%B4_de_S%C3%A3o_Paulo_em_escala.png
+
+20-london.svg
+  Title:   London Underground full map.svg
+  Author:  Ed g2s File:London Underground full map.svg derivative work: DavidCane (talk)
+  Licence: CC BY-SA 3.0 http://creativecommons.org/licenses/by-sa/3.0/
+  Source:  https://commons.wikimedia.org/wiki/File:London_Underground_full_map.svg
+
+21-lisbon.svg
+  Title:   Lisbon metro.svg
+  Author:  Laura Sun
+  Licence: CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0
+  Source:  https://commons.wikimedia.org/wiki/File:Lisbon_metro.svg
+
+22-warsaw.svg
+  Title:   Plan systemu metra w Warszawie.svg
+  Author:  Obywatel A.N.
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Plan_systemu_metra_w_Warszawie.svg
+
+30-berlin.svg
+  Title:   U-Bahn Berlin - Netzplan.svg
+  Author:  Arbalete
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:U-Bahn_Berlin_-_Netzplan.svg
+
+40-hamburg.svg
+  Title:   Karte der U-Bahn Hamburg.svg
+  Author:  Arbalete
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Karte_der_U-Bahn_Hamburg.svg
+
+44-kyiv.svg
+  Title:   Metro Kyiv map.svg
+  Author:  Wiesenpinguin
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Metro_Kyiv_map.svg
+
+69-frankfurt.png
+  Title:   Karte U-Bahn Frankfurt.png
+  Author:  NordNordWest
+  Licence: CC BY-SA 2.0 https://creativecommons.org/licenses/by-sa/2.0
+  Source:  https://commons.wikimedia.org/wiki/File:Karte_U-Bahn_Frankfurt.png
+
+81-naples.svg
+  Title:   Napoli - mappa rete metropolitana (schematica).svg
+  Author:  Arbalete
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Napoli_-_mappa_rete_metropolitana_(schematica).svg
+
+89-munich.svg
+  Title:   Netzplan U-Bahn München.svg
+  Author:  Zeno Heilmaier
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Netzplan_U-Bahn_M%C3%BCnchen.svg
+
+91-madrid.svg
+  Title:   Madrid Metro Map.svg
+  Author:  Javitomad
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Madrid_Metro_Map.svg
+
+93-barcelona.svg
+  Title:   Mapa metro Barcelona actual.svg
+  Author:  ItsAstrid
+  Licence: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0
+  Source:  https://commons.wikimedia.org/wiki/File:Mapa_metro_Barcelona_actual.svg
+
+96-valencia.svg
+  Title:   Mapa metrovalencia.svg
+  Author:  FGV
+  Licence: FAL http://artlibre.org/licence/lal/en
+  Source:  https://commons.wikimedia.org/wiki/File:Mapa_metrovalencia.svg

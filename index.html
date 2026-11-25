@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SP076 – archive 01 – 100 hoodies, 100 prints</title>
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..900&family=Reenie+Beanie&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* plain mode: black ink photocopied on white, after the alchemy flyer */
+  --paper:#FFFFFF; --ink:#000000; --grey:#6E6C67; --soft:#ECEBE7;
+  --red:#D7261E; --blue:#2C4FD1;
+  /* loud mode extras */
+  --yellow:#FFE500; --green:#8BE01E; --magenta:#E6007E; --teal:#1FB3AC;
+  --frame:transparent; --l1:var(--red); --l2:var(--blue); --l3:var(--ink);
+  --sans:'Rubik',Helvetica,Arial,sans-serif; --hand:'Reenie Beanie',cursive;
+  --pad:clamp(14px,2.4vw,34px); --head:76px;
+  --k:0; /* kick envelope 0..1, written by the audio loop */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;height:100dvh;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+#stage{position:fixed;inset:0;overflow:hidden;background:var(--paper)}
+#stage::after{content:"";position:absolute;inset:0;border:0 solid var(--frame);pointer-events:none;z-index:20;transition:border-width .3s cubic-bezier(.3,1.5,.5,1)}
+/* photocopy specks */
+.paper{position:absolute;inset:0;pointer-events:none;opacity:.55;background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 22 -16.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E")}
+
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;z-index:2}
+#gl.grabbing{cursor:grabbing}
+
+.ui{position:absolute;inset:0;pointer-events:none;z-index:3}
+.ui > *{pointer-events:auto}
+.lbl{font:400 13px/1.2 var(--sans);color:var(--grey)}
+.hand-ink{font-family:var(--hand);color:var(--blue);-webkit-text-stroke:1.3px currentColor;paint-order:stroke fill}
+
+/* ---------- top bar (structure from the first design) ---------- */
+.top{position:absolute;top:0;left:var(--pad);right:var(--pad);height:var(--head);display:flex;align-items:center;gap:30px;border-bottom:2.5px solid var(--ink)}
+.mark{display:flex;align-items:center;gap:12px}
+.mark canvas{width:40px;height:40px}
+.word{font:800 36px/1 var(--sans);letter-spacing:-.045em;background:var(--ink);color:var(--paper);padding:3px 14px 7px 12px;margin-left:-4px}
+.top-mid{flex:1;display:flex;gap:34px;font:500 14px/1.3 var(--sans)}
+.top-mid span{color:var(--grey);font-weight:300}
+.top-right{display:flex;align-items:center;gap:24px;font-size:14px}
+.left b{font:800 19px var(--sans)}
+.dub{display:flex;align-items:center;gap:12px;height:52px;padding:0 14px 0 8px;border:2.5px solid var(--ink);background:var(--paper)}
+.dub:hover{background:var(--ink);color:var(--paper)}
+.disc{width:32px;height:32px;border-radius:50%;flex:none;background:
+  radial-gradient(circle, var(--paper) 0 2px, var(--red) 2.5px 8px, #000 8.5px 100%);
+  box-shadow:inset 0 0 0 5px #000, inset 0 0 0 6px #333, inset 0 0 0 9px #000, inset 0 0 0 10px #333}
+.dub.on .disc{animation:spin 1.38s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dub-txt{font:700 14px/1.15 var(--sans);text-align:left;white-space:nowrap}
+.dub-txt small{display:block;font:300 12px var(--sans);color:var(--grey)}
+.dub:hover .dub-txt small,.dub.on .dub-txt small{color:inherit;opacity:.75}
+#scope{width:96px;height:26px;display:block}
+
+/* ---------- record platter under the hoodie ---------- */
+.platter{position:absolute;left:0;top:0;width:1000px;height:220px;z-index:1;pointer-events:none;overflow:visible;transform-origin:0 0;transition:opacity .3s}
+.platter .ink{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- left column ---------- */
+.info{position:absolute;left:var(--pad);top:calc(var(--head) + 26px);width:min(340px,28vw)}
+.cat{font:400 13px var(--sans);color:var(--grey)}
+.big{position:relative;margin-top:4px;font:800 min(11vw,140px)/.82 var(--sans);letter-spacing:-.06em;margin-left:-.04em}
+.big .no{font-size:.3em;font-weight:700;letter-spacing:-.02em;vertical-align:top;margin-right:.08em}
+.hand{position:absolute;left:58%;bottom:-40px;font-size:60px;line-height:1;transform:rotate(-6deg);white-space:nowrap;letter-spacing:0;font-weight:400}
+.status{margin-top:52px;min-height:40px;display:flex;align-items:center}
+.avail{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--sans)}
+.avail::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--ink)}
+.stamp{display:inline-block;padding:5px 12px 3px;border:4px solid var(--red);color:var(--red);font:800 28px/1 var(--sans);letter-spacing:.02em;transform:rotate(-6deg);filter:url(#rough)}
+.stamp small{display:block;font:600 11px var(--sans);margin-top:2px}
+.stamp-in{animation:thunk .28s cubic-bezier(.3,1.6,.5,1)}
+@keyframes thunk{from{transform:rotate(-6deg) scale(1.6);opacity:0}}
+.specs{margin-top:20px;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font:300 14px/1.35 var(--sans)}
+.specs dt{color:var(--grey)}
+.blurb{margin-top:20px;display:grid;grid-template-columns:1fr 92px;gap:16px;align-items:start}
+.blurb p{font:300 14px/1.5 var(--sans);max-width:32ch}
+.blurb figure{background:var(--soft);padding:4px}
+.blurb canvas{width:84px;height:84px;display:block}
+.blurb figcaption{font-size:11px;color:var(--grey);margin-top:3px;text-align:center}
+
+/* ---------- right column ---------- */
+.side{position:absolute;right:var(--pad);top:calc(var(--head) + 26px);bottom:128px;width:250px;display:flex;flex-direction:column;justify-content:space-between}
+.views{display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.vbtn{display:flex;justify-content:space-between;align-items:center;height:40px;padding:0 16px;border:2px solid var(--ink);border-radius:999px;font:600 15px var(--sans);background:var(--paper);text-align:left}
+.vbtn kbd{font:400 12px var(--sans);color:var(--grey)}
+.vbtn.active kbd{color:inherit;opacity:.7}
+.vbtn:hover{background:var(--soft)}
+.vbtn.active{background:var(--ink);color:var(--paper)}
+.drag-note{width:100%;margin-top:8px;font-size:32px;line-height:1;transform:rotate(-3deg);transform-origin:left}
+.buy{display:flex;flex-direction:column}
+.price{font:800 48px/1 var(--sans);letter-spacing:-.04em}
+.price small{font:300 13px var(--sans);letter-spacing:0;color:var(--grey);margin-left:6px}
+.sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px}
+.size{height:44px;border:2px solid var(--ink);font:700 15px var(--sans);background:var(--paper)}
+.size:hover{background:var(--soft)}
+.size[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.sizes.need{animation:need .45s}
+@keyframes need{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+.need-note{font-size:28px;line-height:1;color:var(--red);height:0;overflow:visible;transform:translateY(-8px)}
+.cta{width:100%;height:60px;background:var(--red);color:#fff;font:700 20px/1 var(--sans);letter-spacing:-.02em;transition:transform .1s}
+.cta:hover{background:#B81D16}
+.cta:active{transform:translateY(2px)}
+.cta.disabled{background:transparent;color:var(--grey);border:2px dashed var(--grey);cursor:not-allowed}
+.small{margin-top:8px;font:300 13px/1.4 var(--sans);color:var(--grey)}
+
+/* ---------- number ruler ---------- */
+.foot{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--pad);height:76px;display:flex;align-items:stretch;gap:12px}
+.step{width:44px;flex:none;font:700 20px var(--sans);border:2.5px solid var(--ink);border-radius:999px;background:var(--paper)}
+.step:hover{background:var(--ink);color:var(--paper)}
+.ruler-box{flex:1;display:flex;flex-direction:column;min-width:0}
+.ruler-head{display:flex;justify-content:space-between;margin-bottom:2px}
+.ruler{flex:1;position:relative;display:flex;cursor:ew-resize;touch-action:none;user-select:none;border-bottom:2.5px solid var(--ink)}
+.tk{flex:1;position:relative;min-width:0}
+.tk::before{content:"";position:absolute;left:50%;bottom:0;width:2px;height:26px;background:var(--ink);transform:translateX(-50%)}
+.tk.sold::before{height:8px;width:1px;background:var(--grey)}
+.tk.dec::after{content:attr(data-l);position:absolute;left:50%;top:100%;margin-top:3px;transform:translateX(-50%);font-size:10.5px;color:var(--grey)}
+.tk:hover::before{background:var(--blue)}
+.marker{position:absolute;top:-6px;bottom:0;width:0;transition:left .14s ease-out;pointer-events:none}
+.marker::before{content:"";position:absolute;left:-1.5px;top:14px;bottom:0;width:3px;background:var(--red)}
+.marker span{position:absolute;top:-4px;left:7px;font:700 13px var(--sans);color:var(--red);white-space:nowrap}
+.marker.flip span{left:auto;right:7px}
+.sheet-btn{flex:none;padding:0 18px;border:2.5px solid var(--ink);border-radius:999px;font:700 14px/1.1 var(--sans);background:var(--paper)}
+.sheet-btn:hover{background:var(--ink);color:var(--paper)}
+.credit{position:absolute;right:var(--pad);bottom:3px;font:300 10px var(--sans);color:var(--grey)}
+.credit a{color:inherit}
+.gc .cc{position:absolute;top:2px;right:3px;font:700 8px/1 var(--sans);color:#2C4FD1;pointer-events:none}
+
+/* ---------- loud mode layer (hidden until the music plays) ---------- */
+.party{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.swoosh{position:absolute;width:62vw;height:62vh;overflow:visible}
+.swoosh path{fill:none;stroke-width:22;stroke-linecap:butt;stroke-dasharray:2600;stroke-dashoffset:2600}
+.swoosh.a{left:-2vw;bottom:-4vh}
+.swoosh.b{right:-2vw;top:-4vh;transform:rotate(180deg)}
+.shout{position:absolute;left:30%;top:38%;transform:translate(-50%,-50%);display:grid;justify-items:center;font:900 min(23vh,15vw)/.8 var(--sans);letter-spacing:-.05em;filter:url(#brush);white-space:nowrap}
+.shout.pinned{transform:translate(-100%,-50%)}
+.shout div{display:flex}
+.shout span{display:inline-block;transform:rotate(var(--r,0deg)) translateY(calc(var(--k) * var(--j,0) * -1px)) scale(calc(1 + var(--k) * .07))}
+.shout span:nth-child(3n+1){color:var(--l1)} .shout span:nth-child(3n+2){color:var(--l2)} .shout span:nth-child(3n){color:var(--l3)}
+.burst{position:absolute;width:170px;height:170px;left:calc(var(--pad) + 40vw);top:calc(var(--head) + 6px);animation:spin 11s linear infinite}
+.burst svg{width:100%;height:100%;overflow:visible}
+.burst text{font:800 28px var(--sans)}
+.wipe{position:fixed;inset:0;z-index:40;pointer-events:none;display:grid;grid-template-rows:repeat(6,1fr);visibility:hidden}
+.wipe i{display:block;transform:translateX(-101%)}
+.wipe i:nth-child(1){background:var(--red)} .wipe i:nth-child(2){background:var(--yellow)} .wipe i:nth-child(3){background:var(--teal)}
+.wipe i:nth-child(4){background:var(--blue)} .wipe i:nth-child(5){background:var(--magenta)} .wipe i:nth-child(6){background:var(--green)}
+.wipe.go{visibility:visible}
+.wipe.go i{animation:wipe .62s cubic-bezier(.7,0,.3,1) both}
+.wipe.go i:nth-child(2){animation-delay:.03s} .wipe.go i:nth-child(3){animation-delay:.06s} .wipe.go i:nth-child(4){animation-delay:.09s} .wipe.go i:nth-child(5){animation-delay:.12s} .wipe.go i:nth-child(6){animation-delay:.15s}
+@keyframes wipe{0%{transform:translateX(-101%)}45%,55%{transform:translateX(0)}100%{transform:translateX(101%)}}
+
+/* loud palettes, one every two bars */
+body.loud{--frame:var(--red);--paper:var(--yellow);--soft:rgba(0,0,0,.08);--grey:#000;--l1:var(--red);--l2:var(--blue);--l3:#000}
+body.loud[data-scheme="1"]{--paper:#4F8DF0;--frame:var(--yellow);--l1:var(--yellow);--l2:#000;--l3:var(--red);--blue:#000}
+body.loud[data-scheme="2"]{--paper:var(--green);--frame:var(--magenta);--l1:var(--magenta);--l2:#000;--l3:var(--blue)}
+body.loud[data-scheme="3"]{--paper:var(--magenta);--frame:var(--yellow);--l1:var(--yellow);--l2:#000;--l3:#fff;--red:#000;--blue:#000}
+body.loud #stage::after{border-width:clamp(8px,1.2vw,18px)}
+body.loud .party{opacity:1;visibility:visible}
+body.loud .swoosh path{animation:draw 1.1s .15s cubic-bezier(.3,.8,.3,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+body.loud .word{filter:url(#brush);transform:rotate(calc(var(--k) * -2deg)) scale(calc(1 + var(--k) * .05))}
+body.loud .cta{background:#000;color:#fff}
+body.loud .cta:hover{background:#222}
+body.loud .cta.disabled{background:transparent;color:#000;border-color:#000}
+body.loud .dub{background:#000;color:#fff;border-color:#000}
+body.loud .top{background:var(--paper)}
+body.loud .foot{background:var(--paper);box-shadow:0 0 0 10px var(--paper)}
+
+/* ---------- stock sheet ---------- */
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:grid;place-items:center;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.overlay.open{opacity:1;visibility:visible}
+.sheet{width:min(560px,calc(100vw - 2*var(--pad)));max-height:calc(100dvh - 2*var(--pad));overflow:auto;background:#fff;color:#000;padding:26px 26px 20px;transform:translateY(16px);transition:transform .3s cubic-bezier(.2,.9,.3,1);border:3px solid #000}
+.overlay.open .sheet{transform:none}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.sheet h2{font:800 30px/1 var(--sans);letter-spacing:-.04em}
+.close{font:600 14px var(--sans);border-bottom:2px solid currentColor;padding-bottom:1px}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.gc{aspect-ratio:1.3;display:grid;place-items:center;font:600 clamp(10px,1.7vw,13px) var(--sans);position:relative;overflow:visible;background:#F1F0EC}
+.gc.sold{color:#A3A19B;font-weight:300;background:transparent}
+.gc.av:hover{background:#000;color:#fff}
+.gc svg{position:absolute;inset:-6%;width:112%;height:112%;pointer-events:none;overflow:visible}
+.gc svg path,.gc svg ellipse{fill:none;stroke:#D7261E;stroke-width:2;stroke-linecap:round}
+.sheet-foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font:300 13px var(--sans);color:#6E6C67}
+.sheet-foot .h{font-size:28px;line-height:1}
+
+/* ---------- order form ---------- */
+.scrim{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.scrim.open{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:32;width:min(460px,100vw);background:#fff;color:#000;transform:translateX(104%);transition:transform .45s cubic-bezier(.65,0,.25,1);display:flex;flex-direction:column;border-left:3px solid #000}
+.drawer.open{transform:none}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin:0 26px;padding:24px 0 14px}
+.dhead h2{font:800 28px/1 var(--sans);letter-spacing:-.04em}
+.dbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 26px 26px}
+.line-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E1E0DB;font:300 14px var(--sans)}
+.line-item.total{border-bottom:3px solid #000;font-weight:700;font-size:15px}
+fieldset{border:0;margin-top:24px}
+legend{font:700 16px var(--sans);margin-bottom:6px}
+.f{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid #000;padding:10px 0 4px;min-width:0}
+.f input{width:100%}
+.f label{flex:none;width:86px;font:300 13px var(--sans);color:#6E6C67}
+.f input,.f select{flex:1;min-width:0;background:transparent;border:0;font:400 26px/1 var(--hand);color:#2C4FD1;-webkit-text-stroke:.8px currentColor;padding:0;border-radius:0}
+.f select{font:400 14px var(--sans);color:#000;-webkit-text-stroke:0}
+.f input:focus,.f select:focus{outline:none}
+.f:focus-within{border-bottom-color:#2C4FD1}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 16px}
+.two .f label{width:auto}
+#checkout,#form{min-width:0;max-width:100%}
+.pay{display:flex;gap:18px;margin-top:6px}
+.pay label{display:flex;align-items:center;gap:8px;cursor:pointer;font:400 14px var(--sans)}
+.pay input{appearance:none;width:18px;height:18px;border:2px solid #000;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.pay input:checked{background:radial-gradient(circle,#000 0 4px,transparent 5px)}
+.note{margin-top:12px;font:300 12.5px/1.5 var(--sans);color:#6E6C67}
+.submit{margin-top:22px;width:100%;height:58px;background:#D7261E;color:#fff;font:700 18px var(--sans);letter-spacing:-.02em}
+.submit:hover{background:#B81D16}
+.submit:disabled{opacity:.7;cursor:progress}
+.receipt{background:#F6F5F1;padding:22px 20px 26px;font:400 13px/1.6 var(--sans);position:relative;
+  -webkit-mask:radial-gradient(circle 5px at 50% 100%,transparent 98%,#000) bottom/14px 100% repeat-x;mask:radial-gradient(circle 5px at 50% 100%,transparent 98%,#000) bottom/14px 100% repeat-x}
+.receipt .c{text-align:center}
+.receipt hr{border:0;border-top:1px dashed #000;margin:10px 0}
+.receipt .r{display:flex;justify-content:space-between}
+.receipt .big-r{font-weight:700;font-size:15px}
+.receipt .stamp{position:absolute;right:16px;bottom:22px;font-size:30px;transform:rotate(-12deg)}
+.receipt .thanks{padding-right:120px;margin-top:14px;font-size:30px;line-height:1.05;transform:rotate(-1.5deg)}
+.ghost{margin-top:16px;width:100%;height:50px;border:2.5px solid #000;font:700 14px var(--sans)}
+.ghost:hover{background:#000;color:#fff}
+
+/* ---------- responsive ---------- */
+@media (max-width:1180px){ .specs,.blurb,.burst{display:none} .top-mid .opt{display:none} }
+@media (max-height:800px){ .blurb{display:none} }
+@media (max-height:660px) and (min-width:861px){ .specs,.drag-note{display:none} }
+@media (max-width:860px){
+  :root{--head:64px}
+  .top{gap:12px}
+  .top-mid{display:none}
+  .word{font-size:28px}
+  .info{width:auto}
+  .big{font-size:76px}.hand{position:static;display:inline-block;font-size:40px;margin-left:10px;vertical-align:bottom}
+  .status{margin-top:10px}
+  .side{top:auto;bottom:112px;left:var(--pad);right:var(--pad);width:auto;display:block}
+  .views{flex-direction:row;margin-bottom:10px}.vbtn kbd{display:none}
+  .drag-note{display:none}
+  .buy{display:grid;grid-template-columns:auto 1fr;gap:0 8px;align-items:end}
+  .price,.small,.need-note{display:none}
+  .sizes{margin:0;width:190px}.size{height:52px}
+  .cta{height:52px;font-size:16px}
+  .foot{height:72px;bottom:calc(var(--pad) + 30px)}
+  .side{bottom:142px}
+  .credit{left:var(--pad);bottom:4px;line-height:1.25}
+  .shout{font-size:min(16vh,24vw);left:50%;top:30%}
+  .swoosh{width:90vw;height:45vh}
+}
+@media (max-width:560px){
+  .mark canvas{width:30px;height:30px}
+  .word{font-size:24px;padding:2px 10px 5px 9px}
+  .left .lw{display:none}
+  .dub{width:48px;height:48px;padding:0;justify-content:center}
+  .dub-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  #scope{display:none}
+  .top-right{gap:12px}
+  .sheet-btn{padding:0 12px}.step{width:36px}
+  .sizes{width:160px}
+  .ruler-head{visibility:hidden}
+  .tk.dec:not(.keep)::after{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .dub.on .disc,.burst{animation:none}
+  .shout span{transform:rotate(var(--r,0deg))}
+  body.loud .word{transform:none}
+  .wipe{display:none}
+  body.loud .swoosh path{animation:none;stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="brush" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="3" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <!-- wobbly felt-pen line, like the alchemy flyer drawing -->
+  <filter id="pen" x="-5%" y="-20%" width="110%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="2" seed="11" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div id="stage">
+  <div class="paper"></div>
+  <div class="party" aria-hidden="true">
+    <svg class="swoosh a" viewBox="0 0 1000 600" preserveAspectRatio="xMinYMax meet" id="swA"></svg>
+    <svg class="swoosh b" viewBox="0 0 1000 600" preserveAspectRatio="xMinYMax meet" id="swB"></svg>
+    <div class="shout" id="shout"></div>
+    <div class="burst"><svg viewBox="-100 -100 200 200" id="burst"></svg></div>
+  </div>
+
+  <!-- the hoodie stands on a record; the dot on the rim turns with it -->
+  <svg class="platter" id="platter" viewBox="-500 -110 1000 220" aria-hidden="true">
+    <g filter="url(#pen)">
+      <ellipse class="ink" cx="0" cy="0" rx="480" ry="96" stroke-width="7"/>
+      <ellipse class="ink" cx="0" cy="6" rx="452" ry="86" stroke-width="2.5"/>
+      <ellipse class="ink" cx="0" cy="4" rx="360" ry="68" stroke-width="1.5" stroke-dasharray="60 26"/>
+      <ellipse class="ink" cx="0" cy="3" rx="270" ry="51" stroke-width="1.5" stroke-dasharray="40 30"/>
+      <path class="ink" d="M470 -78 L432 28 Q426 46 404 54 L330 76" stroke-width="7"/>
+      <circle class="ink" cx="470" cy="-80" r="16" stroke-width="6"/>
+      <path class="ink" d="M318 64 l30 -8 l8 24 l-30 8 z" stroke-width="6" fill="var(--ink)"/>
+    </g>
+    <circle id="platMark" r="9" fill="var(--ink)"/>
+  </svg>
+
+  <canvas id="gl" aria-label="3D hoodie. Drag to turn it around."></canvas>
+
+  <div class="ui">
+    <header class="top">
+      <div class="mark"><canvas id="logo" width="80" height="80" aria-hidden="true"></canvas><h1 class="word">SP076</h1></div>
+      <div class="top-mid">
+        <div>archive 01<br><span>heavyweight hoodie</span></div>
+        <div class="opt">100 pieces<br><span>100 different prints</span></div>
+        <div class="opt">released<br><span>20.11.26</span></div>
+      </div>
+      <div class="top-right">
+        <div class="left"><b id="stockNum">14</b><span class="lw"> of 100</span> left</div>
+        <button class="dub" id="audioBtn" aria-pressed="false" title="Play the dubplate (M)">
+          <span class="disc"></span>
+          <span class="dub-txt"><span id="audioLbl">play the dubplate</span><small>LK feat. Stamina MC</small></span>
+          <canvas id="scope" width="192" height="52" aria-hidden="true"></canvas>
+        </button>
+      </div>
+    </header>
+
+    <section class="info" aria-live="polite">
+      <div class="cat">catalogue <span id="catNo">SP076-042</span></div>
+      <div class="big"><span class="no">nº</span><span id="bigNum">042</span><span class="hand hand-ink" id="handNum">42/100</span></div>
+      <div class="status" id="status"></div>
+      <dl class="specs">
+        <dt>cloth</dt><dd>500gsm French terry, brushed back</dd>
+        <dt>cut</dt><dd>boxy, dropped shoulder</dd>
+        <dt>print</dt><dd id="printDesc">contour, drawn from the serial</dd>
+        <dt>run</dt><dd>100 pieces. no repress.</dd>
+      </dl>
+      <div class="blurb">
+        <p>Each hoodie carries its own contour print, generated from its number. No two are the same, and when one goes, it’s gone.</p>
+        <figure><canvas id="printPrev" width="168" height="168"></canvas><figcaption id="prevCap">print 042</figcaption></figure>
+      </div>
+    </section>
+
+    <aside class="side">
+      <nav class="views" aria-label="View">
+        <button class="vbtn active" data-view="front">front <kbd>1</kbd></button>
+        <button class="vbtn" data-view="back">back <kbd>2</kbd></button>
+        <button class="vbtn" data-view="tag">label <kbd>3</kbd></button>
+        <div class="drag-note hand-ink">or drag it round ↻</div>
+      </nav>
+      <div class="buy">
+        <div class="price">€180<small>incl. VAT</small></div>
+        <div class="sizes" id="sizes" role="radiogroup" aria-label="Size">
+          <button class="size" aria-pressed="false" data-size="S">S</button>
+          <button class="size" aria-pressed="false" data-size="M">M</button>
+          <button class="size" aria-pressed="false" data-size="L">L</button>
+          <button class="size" aria-pressed="false" data-size="XL">XL</button>
+        </div>
+        <div class="need-note hand-ink" id="needNote"></div>
+        <button class="cta" id="cta"><span id="ctaLbl">buy nº 042</span></button>
+        <p class="small">ships in 5 working days, tracked.</p>
+      </div>
+    </aside>
+
+    <footer class="foot">
+      <button class="step" id="prev" aria-label="Previous number">‹</button>
+      <div class="ruler-box">
+        <div class="ruler-head lbl"><span>pick your number</span><span><span id="leftNum2">14</span> unsold, shown as tall marks</span></div>
+        <div class="ruler" id="ruler" role="slider" aria-label="Edition number" aria-valuemin="1" aria-valuemax="100" aria-valuenow="42" tabindex="0">
+          <div class="marker" id="marker"><span id="markerNum">042</span></div>
+        </div>
+      </div>
+      <button class="step" id="next" aria-label="Next number">›</button>
+      <button class="sheet-btn" id="openSheet">all 100</button>
+    </footer>
+    <p class="credit">3D hoodie: <a href="https://sketchfab.com/3d-models/hoodie-2c674228f1e946b5b8f508f8f818e130" target="_blank" rel="noopener">“Hoodie” by yogaminggames</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, recoloured with prints added<span id="mapCredit"></span></p>
+  </div>
+
+  <!-- stock sheet -->
+  <div class="overlay" id="sheetOv" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="sTitle">all 100 numbers</h2>
+        <button class="close" id="closeSheet">close</button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="sheet-foot"><span>Crossed out is sold. Circled is the one you’re looking at.</span><span class="h hand-ink"><span id="leftNum3">14</span> left</span></div>
+    </div>
+  </div>
+
+  <!-- order form -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="dhead"><h2 id="dTitle">your order</h2><button class="close" id="closeDrawer">close</button></div>
+    <div class="dbody">
+      <div id="checkout">
+        <div class="line-item"><span id="oItem">Hoodie nº 042/100, size M</span><span>€180.00</span></div>
+        <div class="line-item"><span>Tracked shipping</span><span>€12.00</span></div>
+        <div class="line-item total"><span>Total</span><span>€192.00</span></div>
+        <form id="form" novalidate>
+          <fieldset>
+            <legend>send it to</legend>
+            <div class="f"><label for="fName">Name</label><input id="fName" required autocomplete="name"></div>
+            <div class="f"><label for="fEmail">Email</label><input id="fEmail" type="email" required autocomplete="email"></div>
+            <div class="f"><label for="fAddr">Address</label><input id="fAddr" required autocomplete="street-address"></div>
+            <div class="two">
+              <div class="f"><label for="fCity">City</label><input id="fCity" required autocomplete="address-level2"></div>
+              <div class="f"><label for="fZip">Postcode</label><input id="fZip" required autocomplete="postal-code"></div>
+            </div>
+            <div class="f"><label for="fCountry">Country</label>
+              <select id="fCountry" required autocomplete="country-name">
+                <option>United Kingdom</option><option>Netherlands</option><option>Belgium</option><option>Germany</option><option>France</option><option>Ireland</option><option>Portugal</option><option>Spain</option><option>Italy</option><option>Other (EU)</option>
+              </select>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>pay with</legend>
+            <div class="pay">
+              <label><input type="radio" name="pay" checked> Card</label>
+              <label><input type="radio" name="pay"> PayPal</label>
+              <label><input type="radio" name="pay"> Wallet</label>
+            </div>
+            <p class="note">Prototype: no payment is taken. Placing the order marks this number as sold on this page only.</p>
+          </fieldset>
+          <button class="submit" id="submit" type="submit"><span id="submitLbl">place order, €192</span></button>
+        </form>
+      </div>
+      <div id="confirm" hidden>
+        <div class="receipt">
+          <div class="c"><b>SP076</b><br>archive 01, heavyweight hoodie</div>
+          <hr>
+          <div class="r"><span>Order</span><span id="rId">SP076-042-0000</span></div>
+          <div class="r"><span>Date</span><span id="rDate">--</span></div>
+          <hr>
+          <div class="r"><span id="rItem">Hoodie 042/100, M</span><span>180.00</span></div>
+          <div class="r"><span>Shipping</span><span>12.00</span></div>
+          <hr>
+          <div class="r big-r"><span>Total EUR</span><span>192.00</span></div>
+          <div class="stamp">sold<small id="rStamp">nº 042 / 100</small></div>
+          <div class="thanks hand-ink">Cheers. This number’s yours now.<br>It won’t be made again.</div>
+        </div>
+        <button class="ghost" id="backBtn" type="button">back to the hoodies</button>
+      </div>
+    </div>
+  </aside>
+</div>
+<div class="wipe" id="wipe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/DecalGeometry.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const TOTAL = 100, PRICE = 180, SHIP = 12;
+const SEED_AVAILABLE = [3, 9, 17, 23, 31, 38, 42, 47, 56, 64, 71, 76, 88, 96]; // 14 / 100
+const state = { ed: 42, size: null, sold: new Set(), view: 'front', drawerOpen: false, sheetOpen: false };
+for (let i = 1; i <= TOTAL; i++) if (!SEED_AVAILABLE.includes(i)) state.sold.add(i);
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const pad = n => String(n).padStart(3, '0');
+const isSold = n => state.sold.has(n);
+const remaining = () => TOTAL - state.sold.size;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const mulberry = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+const INK = '#000000', PAPER = '#FFFFFF', BONE = '#E8E4DA', RED = '#D7261E', BLUE = '#2C4FD1', FABRIC_HEX = '#19191B';
+
+/* =========================================================
+   CONTOUR PRINT — one unique shape per serial
+   (meandering lobes drawn as nested parallel outlines,
+    after the hand sketch)
+   ========================================================= */
+function contourSkeleton(seed) {
+  const r = mulberry(seed * 9973 + 1741), branches = [];
+  const n = 5 + Math.floor(r() * 3), rot = r() * Math.PI * 2;
+  const walk = (x, y, a, steps, step, f, ph, amp) => {
+    const pts = [[x, y]];
+    for (let i = 0; i < steps; i++) {
+      a += Math.sin(i * f + ph) * amp * Math.min(1, i / 5);
+      x += Math.cos(a) * step; y += Math.sin(a) * step;
+      if (Math.hypot(x, y) > 1) a += 0.45 * Math.sign(Math.sin(ph) || 1);
+      pts.push([x, y]);
+    }
+    return { pts, a };
+  };
+  for (let b = 0; b < n; b++) {
+    const a0 = rot + (b / n) * Math.PI * 2 + (r() - 0.5) * 0.7;
+    const steps = 17 + Math.floor(r() * 10), step = 0.042 + r() * 0.01;
+    const f = 0.3 + r() * 0.3, ph = r() * 6.28, amp = 0.26 + r() * 0.22;
+    const { pts } = walk(Math.cos(a0) * 0.16, Math.sin(a0) * 0.16, a0, steps, step, f, ph, amp);
+    branches.push(pts);
+    if (r() < 0.5) { // a side lobe
+      const k = Math.floor(pts.length * (0.35 + r() * 0.3)), [px, py] = pts[k], [qx, qy] = pts[k - 1];
+      const dir = Math.atan2(py - qy, px - qx) + (r() < 0.5 ? 1 : -1) * (0.9 + r() * 0.5);
+      branches.push(walk(px, py, dir, 6 + Math.floor(r() * 6), step, f * 1.3, ph + 1, amp).pts);
+    }
+  }
+  return branches;
+}
+function drawContour(ctx, seed, cx, cy, size, ink, bg, lineW, rings = 4) {
+  // a fat outer silhouette with thin parallel lines inside, like the pen sketch.
+  // bg === null cuts the gaps out (transparent canvas for prints and decals)
+  const br = contourSkeleton(seed);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  br.forEach(p => p.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }));
+  const G = rings > 4 ? 0.056 : 0.064; // spacing between lines (unit space)
+  const span = Math.max(x1 - x0, y1 - y0) + (2 * rings + 0.4) * G, k = size / span;
+  const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-mx, -my);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const path = p => {
+    ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
+    for (let i = 1; i < p.length - 1; i++) ctx.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+    ctx.lineTo(p[p.length - 1][0], p[p.length - 1][1]); ctx.stroke();
+  };
+  const lw = lineW / k;
+  for (let ring = rings; ring >= 1; ring--) {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = ink; ctx.lineWidth = 2 * ring * G + lw; br.forEach(path);
+    if (bg === null) { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = '#000'; } else ctx.strokeStyle = bg;
+    ctx.lineWidth = 2 * ring * G - lw; br.forEach(path);
+  }
+  ctx.restore();
+}
+
+/* =========================================================
+   THREE.JS SCENE
+   ========================================================= */
+const canvasEl = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.setClearColor(0x000000, 0);
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+
+// daylight studio — soft, neutral, like a product shot on paper
+scene.add(new THREE.HemisphereLight(0xfffaf0, 0xb9b3a4, 1.0));
+const key = new THREE.DirectionalLight(0xfff6ea, 1.9); key.position.set(3.5, 5, 5); scene.add(key);
+const fill = new THREE.DirectionalLight(0xe8ecf5, 0.6); fill.position.set(-5, 1.5, 3); scene.add(fill);
+const rimA = new THREE.DirectionalLight(0xffffff, 1.1); rimA.position.set(-4, 3, -4); scene.add(rimA);
+const rimB = new THREE.DirectionalLight(0xffffff, 0.9); rimB.position.set(4, 2, -4); scene.add(rimB);
+
+function makeEnv() {
+  const pm = new THREE.PMREMGenerator(renderer), s = new THREE.Scene();
+  s.add(new THREE.Mesh(new THREE.BoxGeometry(12, 12, 12), new THREE.MeshBasicMaterial({ color: 0x8a867c, side: THREE.BackSide })));
+  const strip = (w, h, color, pos) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })); m.position.set(...pos); m.lookAt(0, 0, 0); s.add(m); };
+  strip(8, 2, 0xffffff, [0, 5.5, 1]); strip(1.4, 7, 0xffffff, [-5.5, 0, 1]); strip(1.4, 7, 0xf2efe8, [5.5, 1, 2]); strip(10, 1, 0x222222, [0, -4, 4]);
+  const tex = pm.fromScene(s, 0.03).texture; pm.dispose(); return tex;
+}
+const envTex = makeEnv();
+
+function makeKnit() {
+  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+  const ctx = c.getContext('2d'), img = ctx.createImageData(S, S), r = mulberry(174);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const lx = (x % 8) / 8 - 0.5, ly = (y % 10) / 10;
+    const v = 1 - clamp(Math.abs(Math.abs(lx) * 2 - ly) * 3.2, 0, 1);
+    const h = 0.32 + 0.45 * v + (r() - 0.5) * 0.22;
+    const i = (y * S + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = clamp(h, 0, 1) * 255; img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = maxAniso; return t;
+}
+const knit = makeKnit();
+const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
+const BUMP = 0.0025;
+
+const fabric = new THREE.MeshStandardMaterial({ color: lin(FABRIC_HEX), roughness: 0.96, metalness: 0, bumpMap: knit, bumpScale: BUMP, side: THREE.DoubleSide });
+const fabricInner = new THREE.MeshStandardMaterial({ color: lin('#232325'), roughness: 1, bumpMap: knit, bumpScale: BUMP, side: THREE.BackSide });
+const metal = new THREE.MeshStandardMaterial({ color: 0xd9d7d2, metalness: 1, roughness: 0.25, envMap: envTex, envMapIntensity: 1.1 });
+const cord = new THREE.MeshStandardMaterial({ color: lin('#141415'), roughness: 0.85 });
+
+function canvasTex(w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
+  return { c, ctx: c.getContext('2d'), t };
+}
+const frontTex = canvasTex(1024, 1024), backTex = canvasTex(1024, 1024), tagTex = canvasTex(512, 256);
+const frontMat = new THREE.MeshStandardMaterial({ map: frontTex.t, roughness: 0.94, bumpMap: knit, bumpScale: BUMP });
+const backMat = new THREE.MeshStandardMaterial({ map: backTex.t, roughness: 0.94, bumpMap: knit, bumpScale: BUMP });
+const tagMat = new THREE.MeshStandardMaterial({ map: tagTex.t, roughness: 0.8, side: THREE.DoubleSide });
+
+/* ---------- garment geometry ---------- */
+const T = { W: 2.2, H: 2.35, D: 0.95 };
+function deformTorso(v) {
+  const hw = T.W / 2, hh = T.H / 2, hd = T.D / 2;
+  const nx = clamp(v.x / hw, -1, 1), ny = v.y / hh, ax = Math.abs(nx);
+  let x = v.x, y = v.y, z = v.z;
+  const zf = Math.cbrt(Math.max(0, 1 - ax * ax * ax));
+  z *= zf;
+  z *= 1 + 0.06 * (1 - ny * ny);
+  z *= 1 - 0.42 * Math.pow(smooth(0.7, 1, ny), 1.4);
+  const hem = smooth(-0.78, -1, ny);
+  x *= 1 - 0.035 * hem; z *= 1 - 0.07 * hem;
+  y -= 0.30 * Math.pow(ax, 2.2) * Math.pow(smooth(0.2, 1, ny), 1.2);
+  const f = smooth(0.25, -0.9, ny);
+  z += Math.sign(z) * 0.018 * f * Math.sin(nx * 10.5 + 1.7) * zf * (1 - ax * 0.4);
+  x += Math.sign(x) * 0.012 * f * Math.sin(ny * 7) * ax;
+  v.set(x, y, z);
+  return v;
+}
+const _v = new THREE.Vector3();
+const frontZ = (x, y) => deformTorso(_v.set(x, y, T.D / 2)).z;
+
+function buildTorso() {
+  const g = new THREE.BoxGeometry(T.W, T.H, T.D, 48, 48, 14), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { _v.fromBufferAttribute(p, i); deformTorso(_v); p.setXYZ(i, _v.x, _v.y, _v.z); }
+  g.computeVertexNormals();
+  return new THREE.Mesh(g, [fabric, fabric, fabric, fabric, frontMat, backMat]);
+}
+function ribBand(a, b, h, segs, ridges, amp, p) {
+  const g = new THREE.CylinderGeometry(1, 1, h, segs, 4, true), pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const ang = Math.atan2(z, x), c = Math.cos(ang), s = Math.sin(ang);
+    const r = (1 + amp * Math.cos(ang * ridges)) * (1 - 0.035 * Math.pow(Math.abs(y / (h / 2)), 4));
+    pos.setXYZ(i, a * Math.sign(c) * Math.pow(Math.abs(c), 2 / p) * r, y, b * Math.sign(s) * Math.pow(Math.abs(s), 2 / p) * r);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+function sleeveGeo() {
+  const L = 2.0, g = new THREE.CylinderGeometry(0.42, 0.27, L, 40, 28, true);
+  g.translate(0, -L / 2, 0);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const t = -y / L, ang = Math.atan2(z, x);
+    const r = 1 + 0.05 * Math.sin(t * 14 + ang * 1.5) * Math.sin(t * Math.PI) + 0.07 * smooth(0.78, 1, t) * Math.sin(ang * 5 + t * 30);
+    x *= r; z *= r * 0.88; z += 0.1 * Math.sin(t * Math.PI);
+    pos.setXYZ(i, x, y, z);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+function tubeOnChest(pts, radius, segs = 40) {
+  const v3 = pts.map(([x, y, dz]) => new THREE.Vector3(x, y, frontZ(x, y) + dz));
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(v3), segs, radius, 12, false);
+}
+
+const hoodie = new THREE.Group();
+let tagMesh;
+(function buildHoodie() {
+  hoodie.add(buildTorso());
+  const hem = new THREE.Mesh(ribBand(1.05, 0.44, 0.24, 192, 90, 0.012, 3), fabric);
+  hem.position.y = -T.H / 2 - 0.1; hoodie.add(hem);
+
+  const sg = sleeveGeo();
+  [1, -1].forEach(side => {
+    const arm = new THREE.Group();
+    arm.position.set(0.72 * side, 0.62, 0); arm.rotation.z = 0.36 * side; arm.rotation.x = 0.05;
+    arm.add(new THREE.Mesh(sg, fabric));
+    const cuff = new THREE.Mesh(ribBand(0.255, 0.225, 0.34, 64, 26, 0.045, 2), fabric);
+    cuff.position.set(0, -2.12, 0); arm.add(cuff);
+    hoodie.add(arm);
+  });
+
+  const ps = new THREE.Shape();
+  ps.moveTo(-0.72, -0.3); ps.lineTo(0.72, -0.3); ps.lineTo(0.46, 0.32); ps.lineTo(-0.46, 0.32); ps.closePath();
+  const pg = new THREE.ExtrudeGeometry(ps, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.02, bevelSegments: 3, curveSegments: 1, steps: 1 });
+  const PY = -0.6, pp = pg.attributes.position, puv = pg.attributes.uv;
+  for (let i = 0; i < pp.count; i++) { const x = pp.getX(i), y = pp.getY(i) + PY; pp.setXYZ(i, x, y, frontZ(x, y) + pp.getZ(i) - 0.006); }
+  for (let i = 0; i < puv.count; i++) puv.setXY(i, puv.getX(i) / 2.2, puv.getY(i) / 2.35);
+  hoodie.add(new THREE.Mesh(pg, fabric));
+
+  const neck = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.075, 16, 72), fabric);
+  neck.scale.set(1.15, 0.9, 1); neck.rotation.x = Math.PI / 2 + 0.2; neck.position.set(0, 1.13, 0);
+  hoodie.add(neck);
+
+  const hood = new THREE.Group(); hood.position.set(0, 1.1, -0.2); hood.scale.set(1.06, 0.72, 0.9);
+  const holder = new THREE.Group(); holder.rotation.x = -(Math.PI / 2 + 0.55);
+  const TL = Math.PI * 0.56, R = 0.6;
+  const domeG = new THREE.SphereGeometry(R, 56, 28, 0, Math.PI * 2, 0, TL), dp = domeG.attributes.position;
+  for (let i = 0; i < dp.count; i++) { _v.fromBufferAttribute(dp, i); const k = 1 + 0.035 * Math.sin(_v.x * 9) * Math.cos(_v.z * 7); dp.setXYZ(i, _v.x * k, _v.y * k, _v.z * k); }
+  domeG.computeVertexNormals();
+  const outer = new THREE.Mesh(domeG, new THREE.MeshStandardMaterial({ color: lin(FABRIC_HEX), roughness: 0.96, bumpMap: knit, bumpScale: BUMP }));
+  const inner = new THREE.Mesh(domeG, fabricInner); inner.scale.setScalar(0.95);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R * Math.sin(TL) * 0.975, 0.04, 12, 80), fabric);
+  rim.rotation.x = Math.PI / 2; rim.position.y = R * Math.cos(TL);
+  holder.add(outer, inner, rim); hood.add(holder); hoodie.add(hood);
+
+  hoodie.add(new THREE.Mesh(tubeOnChest([[-0.4, 1.16, -0.14], [-0.22, 1.07, 0.03], [0.0, 0.97, 0.05], [0.14, 0.9, 0.035]], 0.065), fabric));
+  hoodie.add(new THREE.Mesh(tubeOnChest([[0.4, 1.16, -0.12], [0.22, 1.07, 0.06], [0.0, 0.97, 0.085], [-0.14, 0.9, 0.06]], 0.065), fabric));
+
+  [[-0.14, 0.012], [0.14, -0.01]].forEach(([x0, sway]) => {
+    const pts = [[x0, 0.93, 0.03], [x0 + sway, 0.78, 0.03], [x0 - sway * 0.6, 0.62, 0.028], [x0 + sway * 0.4, 0.5, 0.026]];
+    hoodie.add(new THREE.Mesh(tubeOnChest(pts, 0.019), cord));
+    const ey = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.01, 8, 24), metal);
+    ey.position.set(x0, 0.93, frontZ(x0, 0.93) + 0.012); hoodie.add(ey);
+    const ag = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.021, 0.1, 16), metal);
+    const ex = x0 + sway * 0.4; ag.position.set(ex, 0.45, frontZ(ex, 0.45) + 0.028); hoodie.add(ag);
+  });
+
+  tagMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.13), tagMat);
+  tagMesh.position.set(0.62, -1.255, 0.432); tagMesh.rotation.set(-0.06, 0.12, 0.015);
+  hoodie.add(tagMesh);
+})();
+const BASE_Y = 0.12;
+hoodie.position.y = BASE_Y;
+scene.add(hoodie);
+
+let shadowMesh;
+(function shadow() {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+  const g = x.createRadialGradient(128, 128, 0, 128, 128, 128); g.addColorStop(0, 'rgba(40,32,18,.55)'); g.addColorStop(0.5, 'rgba(40,32,18,.18)'); g.addColorStop(1, 'rgba(40,32,18,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 1.3), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = -1.95; scene.add(m); shadowMesh = m;
+})();
+
+/* ---------- garment textures ---------- */
+function fabricBase(ctx, W, H) {
+  ctx.fillStyle = FABRIC_HEX; ctx.fillRect(0, 0, W, H);
+  const r = mulberry(7);
+  for (let i = 0; i < 9000; i++) { ctx.fillStyle = r() > 0.5 ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.08)'; ctx.fillRect(r() * W, r() * H, 1.5, 1.5); }
+}
+// prints live on transparent canvases so they work on the drawn hoodie and as decals on a real model
+const chestPrint = canvasTex(512, 512), backPrint = canvasTex(1024, 1024);
+// screen-print wear: knock tiny specks out of the ink
+function inkWear(ctx, x, y, w, h, seed) {
+  const r = mulberry(seed); ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 900; i++) ctx.fillRect(x + r() * w, y + r() * h, 1 + r() * 1.5, 1 + r() * 1.5);
+  ctx.restore();
+}
+/* =========================================================
+   CITY EDITIONS: numbers that are a city's phone code carry that
+   city's metro lines instead of the contour (11 = São Paulo, SP).
+   Maps from Wikimedia Commons, credited on the page when shown.
+   ========================================================= */
+const CITY = {
+ "1": {
+  "code": "PA",
+  "name": "Paris",
+  "file": "01-paris",
+  "author": "Rigil",
+  "lic": "CC BY 3.0",
+  "licUrl": "https://creativecommons.org/licenses/by/3.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Carte_M%C3%A9tro_de_Paris.svg"
+ },
+ "2": {
+  "code": "MI",
+  "name": "Milan",
+  "file": "02-milan",
+  "author": "Arbalete",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Milano_-_mappa_rete_metropolitana_(schematica).svg"
+ },
+ "4": {
+  "code": "LY",
+  "name": "Lyon",
+  "file": "04-lyon",
+  "author": "Chabe01",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Carte_M%C3%A9tro_Lyon_(2024).svg"
+ },
+ "6": {
+  "code": "RO",
+  "name": "Rome",
+  "file": "06-rome",
+  "author": "Basso Leonardo",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Roma_-_mappa_metropolitana_2025_(schematica).svg"
+ },
+ "8": {
+  "code": "ST",
+  "name": "Stockholm",
+  "file": "08-stockholm",
+  "author": "user:xyboi, redraw by Stonyyy",
+  "lic": "CC BY-SA 3.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Stockholm_metrosystem_map.svg"
+ },
+ "9": {
+  "code": "HE",
+  "name": "Helsinki",
+  "file": "09-helsinki",
+  "author": "Jyri Lehtinen aka. Oghmoir",
+  "lic": "CC BY-SA 3.0",
+  "licUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "src": "https://commons.wikimedia.org/wiki/File:Helsinki_Region_rail_transport_w_plans.svg"
+ },
+ "10": {
+  "code": "RT",
+  "name": "Rotterdam",
+  "file": "10-rotterdam",
+  "author": "Wiesenpinguin",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Liniennetz_Metro_Rotterdam.svg"
+ },
+ "11": {
+  "code": "SP",
+  "name": "São Paulo",
+  "file": "11-sao-paulo",
+  "author": "Eliezer Santos",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Mapa_do_Metr%C3%B4_de_S%C3%A3o_Paulo_em_escala.png"
+ },
+ "20": {
+  "code": "LO",
+  "name": "London",
+  "file": "20-london",
+  "author": "Ed g2s, derivative work by DavidCane",
+  "lic": "CC BY-SA 3.0",
+  "licUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "src": "https://commons.wikimedia.org/wiki/File:London_Underground_full_map.svg"
+ },
+ "21": {
+  "code": "LI",
+  "name": "Lisbon",
+  "file": "21-lisbon",
+  "author": "Laura Sun",
+  "lic": "CC BY-SA 3.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Lisbon_metro.svg"
+ },
+ "22": {
+  "code": "WA",
+  "name": "Warsaw",
+  "file": "22-warsaw",
+  "author": "Obywatel A.N.",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Plan_systemu_metra_w_Warszawie.svg"
+ },
+ "30": {
+  "code": "BE",
+  "name": "Berlin",
+  "file": "30-berlin",
+  "author": "Arbalete",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:U-Bahn_Berlin_-_Netzplan.svg"
+ },
+ "40": {
+  "code": "HA",
+  "name": "Hamburg",
+  "file": "40-hamburg",
+  "author": "Arbalete",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Karte_der_U-Bahn_Hamburg.svg"
+ },
+ "44": {
+  "code": "KY",
+  "name": "Kyiv",
+  "file": "44-kyiv",
+  "author": "Wiesenpinguin",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Metro_Kyiv_map.svg"
+ },
+ "69": {
+  "code": "FR",
+  "name": "Frankfurt",
+  "file": "69-frankfurt",
+  "author": "NordNordWest",
+  "lic": "CC BY-SA 2.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Karte_U-Bahn_Frankfurt.png"
+ },
+ "81": {
+  "code": "NA",
+  "name": "Naples",
+  "file": "81-naples",
+  "author": "Arbalete",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Napoli_-_mappa_rete_metropolitana_(schematica).svg"
+ },
+ "89": {
+  "code": "MU",
+  "name": "Munich",
+  "file": "89-munich",
+  "author": "Zeno Heilmaier",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Netzplan_U-Bahn_M%C3%BCnchen.svg"
+ },
+ "91": {
+  "code": "MA",
+  "name": "Madrid",
+  "file": "91-madrid",
+  "author": "Javitomad",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Madrid_Metro_Map.svg"
+ },
+ "93": {
+  "code": "BA",
+  "name": "Barcelona",
+  "file": "93-barcelona",
+  "author": "ItsAstrid",
+  "lic": "CC BY-SA 4.0",
+  "licUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "src": "https://commons.wikimedia.org/wiki/File:Mapa_metro_Barcelona_actual.svg"
+ },
+ "96": {
+  "code": "VA",
+  "name": "Valencia",
+  "file": "96-valencia",
+  "author": "FGV",
+  "lic": "FAL",
+  "licUrl": "http://artlibre.org/licence/lal/en",
+  "src": "https://commons.wikimedia.org/wiki/File:Mapa_metrovalencia.svg"
+ }
+};
+const cityImgs = {};
+function cityImage(ed) {
+  const c = CITY[ed]; if (!c) return null;
+  let im = cityImgs[ed];
+  if (!im) { im = cityImgs[ed] = new Image(); im.onload = () => { if (state.ed === ed) redrawGarment(); }; im.src = `subways/lines/${c.file}-lines.png`; }
+  return im.complete && im.naturalWidth ? im : null;
+}
+// draw the lines image to fit a box; small offsets thicken thin lines for print
+function drawFit(ctx, im, cx, cy, bw, bh, bold) {
+  const k = Math.min(bw / im.naturalWidth, bh / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k;
+  const offs = bold ? [[0, 0], [bold, 0], [-bold, 0], [0, bold], [0, -bold]] : [[0, 0]];
+  offs.forEach(([dx, dy]) => ctx.drawImage(im, cx - w / 2 + dx, cy - h / 2 + dy, w, h));
+}
+function drawChestPrint(ed) {
+  const { ctx, c } = chestPrint; ctx.clearRect(0, 0, c.width, c.height);
+  const city = CITY[ed], cim = cityImage(ed);
+  if (city) { if (cim) drawFit(ctx, cim, 256, 185, 360, 330, 2.2); }
+  else drawContour(ctx, ed, 256, 190, 300, BONE, null, 3, 4);
+  inkWear(ctx, 90, 30, 330, 330, ed + 3);
+  // hand-numbered fraction underneath, like the sketch
+  ctx.fillStyle = BONE; ctx.strokeStyle = BONE; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+  ctx.save(); ctx.translate(262, 410); ctx.rotate(-0.05);
+  const top = city ? `${city.code} ${ed}` : String(ed);
+  ctx.lineWidth = 2.4; ctx.font = '400 86px "Reenie Beanie"'; ctx.fillText(top, 0, -8); ctx.strokeText(top, 0, -8);
+  const half = Math.max(60, ctx.measureText(top).width / 2 + 6);
+  ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-half, 6); ctx.quadraticCurveTo(0, 0, half + 4, 4); ctx.stroke();
+  ctx.lineWidth = 2.4; ctx.font = '400 80px "Reenie Beanie"'; ctx.fillText('100', 0, 74); ctx.strokeText('100', 0, 74);
+  ctx.restore();
+  chestPrint.t.needsUpdate = true;
+}
+function drawBackPrint(ed) {
+  const { ctx, c } = backPrint; ctx.clearRect(0, 0, c.width, c.height);
+  const city = CITY[ed], cim = cityImage(ed);
+  if (city) { if (cim) drawFit(ctx, cim, 512, 430, 800, 760, 1.8); }
+  else drawContour(ctx, ed, 512, 440, 720, BONE, null, 2.4, 5);
+  inkWear(ctx, 152, 80, 720, 720, ed + 11);
+  ctx.fillStyle = 'rgba(232,228,218,.85)'; ctx.textAlign = 'center';
+  ctx.font = '500 24px Rubik';
+  ctx.fillText(city ? `SP076   ${city.code} nº ${pad(ed)}/100   ${city.name.toLowerCase()} metro` : `SP076   nº ${pad(ed)}/100`, 512, 862);
+  backPrint.t.needsUpdate = true;
+}
+function drawFront() {
+  const { ctx, c } = frontTex, s = 0.6;
+  fabricBase(ctx, c.width, c.height);
+  ctx.drawImage(chestPrint.c, 735 - 256 * s, 318 - 190 * s, 512 * s, 512 * s); // wearer's left chest
+  frontTex.t.needsUpdate = true;
+}
+function drawBack() {
+  const { ctx, c } = backTex;
+  fabricBase(ctx, c.width, c.height); ctx.drawImage(backPrint.c, 0, 0);
+  backTex.t.needsUpdate = true;
+}
+function drawTag(ed, sold) {
+  const { ctx, c } = tagTex, W = c.width, H = c.height;
+  ctx.fillStyle = '#EDE9DF'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(0,0,0,.05)'; for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);       // weave
+  for (let x = 0; x < W; x += 4) { ctx.fillStyle = 'rgba(0,0,0,.025)'; ctx.fillRect(x, 0, 1, H); }
+  ctx.strokeStyle = 'rgba(17,17,16,.5)'; ctx.setLineDash([7, 6]); ctx.lineWidth = 2.5; ctx.strokeRect(12, 12, W - 24, H - 24); ctx.setLineDash([]);
+  drawContour(ctx, 174, 84, 104, 104, INK, '#EDE9DF', 1.8, 3);
+  ctx.fillStyle = INK; ctx.textAlign = 'left';
+  ctx.font = '800 52px Rubik'; ctx.fillText('SP076', 156, 96);
+  ctx.font = '600 26px Rubik'; ctx.fillText(`nº ${pad(ed)} / 100`, 158, 140);
+  ctx.font = '300 19px Rubik'; ctx.fillText('500gsm cotton, wash 30°C', 158, 176);
+  ctx.fillText('archive 01, no repress', 158, 204);
+  if (sold) {
+    ctx.save(); ctx.translate(360, 128); ctx.rotate(-0.22); ctx.globalAlpha = 0.88;
+    ctx.strokeStyle = RED; ctx.lineWidth = 7; ctx.strokeRect(-118, -44, 236, 88);
+    ctx.fillStyle = RED; ctx.textAlign = 'center'; ctx.font = '800 64px Rubik'; ctx.fillText('sold', 0, 23);
+    ctx.globalCompositeOperation = 'destination-out'; const r = mulberry(ed);
+    for (let i = 0; i < 260; i++) ctx.fillRect(-125 + r() * 250, -50 + r() * 100, 2 + r() * 3, 2 + r() * 2);
+    ctx.restore();
+  }
+  tagTex.t.needsUpdate = true;
+}
+function redrawGarment() { drawChestPrint(state.ed); drawBackPrint(state.ed); drawFront(); drawBack(); drawTag(state.ed, isSold(state.ed)); drawPreview(); }
+
+/* =========================================================
+   REAL HOODIE MODEL (optional)
+   Put a .glb file at models/hoodie.glb and it replaces the drawn hoodie.
+   The prints are projected onto it as decals. Tune the numbers below if
+   they land in the wrong place: chest/back/tag are [x, y] positions on the
+   fitted model (scene units, 0,0 = middle of the hoodie, +x = wearer's left),
+   lift moves the whole model up/down, turn rotates it to face the camera.
+   ========================================================= */
+const MODEL = { url: 'models/hoodie.glb', height: 3.6, width: 4.4, lift: -0.2, turn: 0, chest: [0.3, 0.2], back: [0, -0.12], tag: [0.43, -1.08], chestSize: 0.5, backSize: 1.45 };
+let modelLoaded = false;
+function loadHoodieModel() {
+  if (!THREE.GLTFLoader) return;
+  fetch(MODEL.url, { method: 'HEAD' })
+    .then(r => { if (r.ok) new THREE.GLTFLoader().load(MODEL.url, g => useModel(g.scene), undefined, e => console.warn('Hoodie model failed to load:', e)); })
+    .catch(() => {});
+}
+function useModel(root) {
+  root.rotation.y = MODEL.turn; root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+  const s = Math.min(MODEL.height / size.y, MODEL.width / size.x);   // fit inside height x width
+  root.scale.setScalar(s); root.position.set(-mid.x * s, -mid.y * s + MODEL.lift, -mid.z * s);
+  const meshes = [];
+  root.traverse(o => {
+    if (!o.isMesh) return; meshes.push(o);
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+      if (m.color) m.color.copy(lin(FABRIC_HEX));
+      m.map = null; m.roughness = 0.95; m.metalness = 0; m.side = THREE.DoubleSide;
+      if (!m.normalMap) { m.bumpMap = knit; m.bumpScale = BUMP; }
+      m.needsUpdate = true;
+    });
+  });
+  const keep = [hoodie.rotation.clone(), hoodie.position.clone(), hoodie.scale.clone()];
+  hoodie.children.forEach(ch => { if (ch !== tagMesh) ch.visible = false; });
+  hoodie.add(root);
+  hoodie.rotation.set(0, 0, 0); hoodie.position.set(0, 0, 0); hoodie.scale.set(1, 1, 1); hoodie.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster();
+  const hit = (x, y, dir) => { y += MODEL.lift; ray.set(new THREE.Vector3(x, y, dir * 20), new THREE.Vector3(0, 0, -dir)); return ray.intersectObjects(meshes, false)[0]; };
+  const decal = (h, turn, w, tex, ht = w) => {
+    if (!h || !THREE.DecalGeometry) return;
+    const mat = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.28, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, roughness: 0.9, bumpMap: knit, bumpScale: BUMP });
+    // the model is several stacked cloth layers, so print onto each one (thin box: front or back only)
+    const facing = turn ? -1 : 1;   // keep only cloth facing the viewer on that side, so prints never show through
+    meshes.forEach(m => {
+      const g = new THREE.DecalGeometry(m, h.point, new THREE.Euler(0, turn, 0), new THREE.Vector3(w, ht, 0.5));
+      const pos = g.attributes.position.array, nor = g.attributes.normal.array, uv = g.attributes.uv.array, P = [], N = [], U = [];
+      for (let t = 0; t < pos.length / 9; t++) {
+        const nz = (nor[t * 9 + 2] + nor[t * 9 + 5] + nor[t * 9 + 8]) / 3;
+        if (nz * facing < 0.25) continue;
+        P.push(...pos.slice(t * 9, t * 9 + 9)); N.push(...nor.slice(t * 9, t * 9 + 9)); U.push(...uv.slice(t * 6, t * 6 + 6));
+      }
+      if (!P.length) return;
+      const out = new THREE.BufferGeometry();
+      out.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); out.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); out.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+      hoodie.add(new THREE.Mesh(out, mat));
+    });
+  };
+  decal(hit(...MODEL.chest, 1), 0, MODEL.chestSize, chestPrint.t);
+  decal(hit(...MODEL.back, -1), Math.PI, MODEL.backSize, backPrint.t);
+  const th = hit(...MODEL.tag, 1);
+  // the woven label is printed onto the cloth too, so it follows the hem's folds; the flat one only marks where the camera looks
+  if (th) { decal(th, 0, 0.26, tagTex.t, 0.13); tagMesh.position.copy(th.point); tagMesh.visible = false; }
+  [hoodie.rotation, hoodie.position, hoodie.scale].forEach((v, i) => v.copy(keep[i]));
+  shadowMesh.position.y = -1.75;
+  modelLoaded = true; updateCamTargets();
+}
+
+/* ---------- camera + interaction ---------- */
+let rotY = -0.35, rotX = 0, velY = 0, targetRotX = 0, tweenRot = null, lastInteract = performance.now();
+const drag = { active: false, x: 0, y: 0, lastMove: 0 };
+const camPos = new THREE.Vector3(0, 0.3, 14), camTarget = new THREE.Vector3(), lookCur = new THREE.Vector3(0, -0.2, 0), lookTarget = new THREE.Vector3();
+const TAG_ROT = -0.3;
+const viewSize = () => ({ w: window.innerWidth || canvasEl.clientWidth || 1280, h: window.innerHeight || canvasEl.clientHeight || 720 });
+function baseDist() { const { w, h } = viewSize(), a = w / h; return Math.max(9.6, 4.7 / (2 * Math.tan(THREE.MathUtils.degToRad(15)) * a)); }
+function updateCamTargets() {
+  const narrow = viewSize().w < 860;
+  if (state.view === 'tag') {
+    const lx = tagMesh.position.x, ly = tagMesh.position.y, lz = tagMesh.position.z;
+    const x = lx * Math.cos(TAG_ROT) + lz * Math.sin(TAG_ROT), z = -lx * Math.sin(TAG_ROT) + lz * Math.cos(TAG_ROT), y = ly + BASE_Y;
+    camTarget.set(x + 0.2, y + 0.12, z + (modelLoaded ? 3.4 : 2.0)); lookTarget.set(x, y - 0.12, z);
+  } else { camTarget.set(0, 0.3, baseDist()); lookTarget.set(0, narrow ? -0.75 : -0.5, 0); }
+}
+function setView(v) {
+  state.view = v;
+  $$('.vbtn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  tweenRot = v === 'front' ? 0 : v === 'back' ? Math.PI : TAG_ROT;
+  updateCamTargets(); lastInteract = performance.now();
+}
+const shortAngle = (from, to) => { let d = (to - from) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+
+canvasEl.addEventListener('pointerdown', e => {
+  drag.active = true; drag.x = e.clientX; drag.y = e.clientY; drag.lastMove = performance.now();
+  tweenRot = null; velY = 0; canvasEl.setPointerCapture(e.pointerId); canvasEl.classList.add('grabbing'); lastInteract = performance.now();
+  if (state.view !== 'tag') $$('.vbtn').forEach(b => b.classList.remove('active'));
+});
+canvasEl.addEventListener('pointermove', e => {
+  if (!drag.active) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+  rotY += dx * 0.009; velY = dx * 0.009; targetRotX = clamp(targetRotX + dy * 0.004, -0.35, 0.35);
+  drag.lastMove = performance.now(); lastInteract = drag.lastMove;
+});
+const endDrag = () => { if (!drag.active) return; drag.active = false; canvasEl.classList.remove('grabbing'); if (performance.now() - drag.lastMove > 90) velY = 0; };
+canvasEl.addEventListener('pointerup', endDrag); canvasEl.addEventListener('pointercancel', endDrag);
+
+function resize() {
+  const { w, h } = viewSize();
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); updateCamTargets(); placeMarker();
+}
+window.addEventListener('resize', resize);
+
+/* =========================================================
+   DUBPLATE — plays the track in audio/ (or a built-in beat), the page reacts to its kicks
+   ========================================================= */
+const TRACK = { url: 'audio/lk-carolina.mp3', bpm: 174 };
+// If the MP3 isn't there (e.g. on the public site), a 174 BPM beat is synthesised in the browser instead.
+const audio = { ctx: null, on: false, el: null, hasTrack: null };
+fetch(TRACK.url, { method: 'HEAD' }).then(r => { audio.hasTrack = r.ok; }).catch(() => { audio.hasTrack = false; });
+function initAudio() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const gain = ctx.createGain(); gain.gain.value = 0;
+  const an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.15;
+  gain.connect(an); an.connect(ctx.destination);
+  Object.assign(audio, { ctx, gain, an, wave: new Uint8Array(an.fftSize), freq: new Uint8Array(an.frequencyBinCount), avg: 0, lastHit: -9, stopT: null, t0: 0 });
+  if (audio.hasTrack !== false) {
+    const el = new Audio(TRACK.url); el.loop = true; el.preload = 'auto';
+    ctx.createMediaElementSource(el).connect(gain);
+    el.addEventListener('error', () => { audio.hasTrack = false; audio.el = null; if (audio.on) startSynth(); });
+    audio.el = el;
+  }
+}
+/* ---- built-in dubplate: 174 BPM breakbeat + reese bass, no files ---- */
+const SIX = 60 / TRACK.bpm / 4;
+const KICK = new Set([0, 10, 16, 25]), SNARE = new Set([4, 12, 20, 28]), GHOST = new Set([7, 15, 23, 30]), OPEN = new Set([14, 30]);
+const BASS = [{ s: 0, n: 41.2, l: 9 }, { s: 10, n: 41.2, l: 5 }, { s: 16, n: 49.0, l: 6 }, { s: 23, n: 43.65, l: 3 }, { s: 26, n: 36.71, l: 6 }];
+const syn = { built: false, timer: null, step: 0, next: 0 };
+function buildSynth() {
+  const ctx = audio.ctx, master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+  master.connect(comp); comp.connect(audio.gain);
+  const nb = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), nd = nb.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), sub = ctx.createOscillator();
+  o1.type = o2.type = 'sawtooth'; o1.detune.value = -16; o2.detune.value = 17; sub.type = 'sine';
+  const og = ctx.createGain(); og.gain.value = 0.32;
+  const sh = ctx.createWaveShaper(), curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = 7 * x / (1 + 6 * Math.abs(x)); } sh.curve = curve;
+  const rf = ctx.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 260; rf.Q.value = 7;
+  const sg = ctx.createGain(); sg.gain.value = 0.55;
+  const rg = ctx.createGain(); rg.gain.value = 0;
+  o1.connect(og); o2.connect(og); og.connect(sh); sh.connect(rf); rf.connect(rg); sub.connect(sg); sg.connect(rg); rg.connect(master);
+  [o1, o2].forEach(o => { o.frequency.value = 82.4; o.start(); }); sub.frequency.value = 41.2; sub.start();
+  Object.assign(syn, { built: true, master, nb, o1, o2, sub, rf, rg });
+}
+function noiseSrc(t) { const n = audio.ctx.createBufferSource(); n.buffer = syn.nb; n.start(t, Math.random() * 0.6); return n; }
+function sKick(t) {
+  const ctx = audio.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(44, t + 0.11);
+  g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+  o.connect(g); g.connect(syn.master); o.start(t); o.stop(t + 0.45);
+}
+function sSnare(t, v) {
+  const ctx = audio.ctx, n = noiseSrc(t), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+  hp.type = 'highpass'; hp.frequency.value = 1300; g.gain.setValueAtTime(0.55 * v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  n.connect(hp); hp.connect(g); g.connect(syn.master); n.stop(t + 0.22);
+  const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'triangle';
+  o.frequency.setValueAtTime(205, t); o.frequency.exponentialRampToValueAtTime(165, t + 0.08);
+  og.gain.setValueAtTime(0.45 * v, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+  o.connect(og); og.connect(syn.master); o.start(t); o.stop(t + 0.13);
+}
+function sHat(t, v, open) {
+  const ctx = audio.ctx, n = noiseSrc(t), hp = ctx.createBiquadFilter(), g = ctx.createGain(), d = open ? 0.2 : 0.04;
+  hp.type = 'highpass'; hp.frequency.value = 7800; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  n.connect(hp); hp.connect(g); g.connect(syn.master); n.stop(t + d + 0.02);
+}
+function sBass(note, t) {
+  const { o1, o2, sub, rf, rg } = syn, end = t + note.l * SIX * 0.92;
+  [o1, o2].forEach(o => o.frequency.setTargetAtTime(note.n * 2, t, 0.01)); sub.frequency.setTargetAtTime(note.n, t, 0.01);
+  rg.gain.cancelScheduledValues(t); rg.gain.setTargetAtTime(0.5, t, 0.008); rg.gain.setTargetAtTime(0, end, 0.03);
+  rf.frequency.cancelScheduledValues(t); rf.frequency.setValueAtTime(190, t);
+  rf.frequency.linearRampToValueAtTime(1350, t + (end - t) * 0.45); rf.frequency.linearRampToValueAtTime(260, end);
+}
+function playStep(st, t) {
+  if (KICK.has(st)) sKick(t);
+  if (SNARE.has(st)) sSnare(t, 1); else if (GHOST.has(st)) sSnare(t, 0.26);
+  if (st % 2 === 0) sHat(t, st % 4 === 2 ? 0.3 : 0.16, OPEN.has(st)); else if (st % 4 === 3) sHat(t, 0.08, false);
+  const b = BASS.find(x => x.s === st); if (b) sBass(b, t);
+}
+function schedule() { while (syn.next < audio.ctx.currentTime + 0.12) { playStep(syn.step, syn.next); syn.next += SIX; syn.step = (syn.step + 1) % 32; } }
+function startSynth() {
+  if (!syn.built) buildSynth();
+  clearInterval(syn.timer); syn.step = 0; syn.next = audio.ctx.currentTime + 0.06; audio.t0 = syn.next;
+  syn.timer = setInterval(schedule, 25); schedule();
+}
+function stopSynth() {
+  clearInterval(syn.timer); syn.timer = null;
+  if (syn.rg) { const n = audio.ctx.currentTime; syn.rg.gain.cancelScheduledValues(n); syn.rg.gain.setTargetAtTime(0, n, 0.02); }
+}
+// seconds into the music, for switching colour schemes every two bars
+const songTime = () => audio.el ? audio.el.currentTime : audio.ctx.currentTime - audio.t0;
+
+function setAudioUI(on) {
+  audio.on = on;
+  const b = $('#audioBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  $('#audioLbl').textContent = on ? 'stop the music' : 'play the dubplate';
+  setLoud(on);
+}
+function toggleAudio() {
+  if (!audio.ctx) initAudio();
+  const { ctx, gain } = audio, now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  if (!audio.on) {
+    ctx.resume(); clearTimeout(audio.stopT);
+    if (audio.el) audio.el.play().catch(err => { console.warn('Track failed, using the built-in beat:', err); audio.el = null; if (audio.on) startSynth(); });
+    else startSynth();
+    gain.gain.setTargetAtTime(0.9, now, 0.06);
+    setAudioUI(true);
+  } else {
+    gain.gain.setTargetAtTime(0, now, 0.08);
+    const el = audio.el;
+    audio.stopT = setTimeout(() => { if (el) el.pause(); stopSynth(); }, 450);   // pause, so the track carries on from here next time
+    setAudioUI(false);
+  }
+}
+$('#audioBtn').addEventListener('click', toggleAudio);
+
+// little oscilloscope inside the play button
+const scope = $('#scope'), sctx = scope.getContext('2d');
+function drawScope() {
+  const W = scope.width, H = scope.height, onDark = $('#audioBtn').matches(':hover') || audio.on;
+  sctx.clearRect(0, 0, W, H); sctx.strokeStyle = onDark ? PAPER : INK; sctx.lineWidth = 2; sctx.beginPath();
+  if (audio.on) {
+    audio.an.getByteTimeDomainData(audio.wave);
+    const n = 160;
+    for (let i = 0; i < n; i++) { const v = audio.wave[i * 3] / 128 - 1, x = (i / (n - 1)) * W, y = H / 2 + v * H * 0.46; i ? sctx.lineTo(x, y) : sctx.moveTo(x, y); }
+  } else { sctx.moveTo(0, H / 2); sctx.lineTo(W, H / 2); }
+  sctx.stroke();
+}
+
+
+/* =========================================================
+   LOUD MODE — colour, stripes and jumping letters while the music plays
+   ========================================================= */
+const NS = 'http://www.w3.org/2000/svg';
+const STRIPES = ['#D7261E', '#FFE500', '#1FB3AC', '#2C4FD1', '#E6007E', '#8BE01E', '#000000'];
+['#swA', '#swB'].forEach(id => {
+  const svg = $(id);
+  STRIPES.forEach((c, i) => {           // concentric bands: horizontal run, quarter turn, vertical run
+    const R = 120 + i * 30, cx = 420, cy = 330, p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', `M-80 ${cy + R} H${cx} A${R} ${R} 0 0 0 ${cx + R} ${cy} V-80`);
+    p.setAttribute('stroke', c); p.style.animationDelay = `${0.15 + i * 0.05}s`;
+    svg.appendChild(p);
+  });
+});
+(function burst() {                     // spiky sticker, like the cartoon DJ's hair
+  const pts = [], n = 18, r = mulberry(17);
+  for (let i = 0; i < n * 2; i++) { const a = (i / (n * 2)) * Math.PI * 2, rad = i % 2 ? 58 : 82 + r() * 16; pts.push(`${(Math.cos(a) * rad).toFixed(1)},${(Math.sin(a) * rad).toFixed(1)}`); }
+  $('#burst').innerHTML = `<polygon points="${pts.join(' ')}" fill="#E6007E" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+    <text x="0" y="-4" text-anchor="middle" fill="#fff">174</text><text x="0" y="22" text-anchor="middle" fill="#000" style="font-size:16px">bpm</text>`;
+})();
+(function shout() {                     // SP / 076 in scattered, rotated letters
+  const r = mulberry(174), row = w => `<div>${[...w].map(ch => `<span style="--r:${((r() - 0.5) * 14).toFixed(1)}deg;--j:${(8 + r() * 26).toFixed(0)}">${ch}</span>`).join('')}</div>`;
+  $('#shout').innerHTML = row('SP') + row('076');
+})();
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const SCHEME_RIMS = [[0xd7261e, 0x2c6fd1], [0xffe500, 0xd7261e], [0xe6007e, 0x2c6fd1], [0xffe500, 0x8be01e]];
+let scheme = 0, bassK = 0;
+function applyScheme(i) {
+  scheme = i; document.body.dataset.scheme = i;
+  const [a, b] = SCHEME_RIMS[i]; rimA.color.setHex(a); rimB.color.setHex(b); rimA.intensity = 2.4; rimB.intensity = 2;
+}
+function setLoud(on) {
+  const w = $('#wipe');
+  if (!reduceMotion.matches) { w.classList.remove('go'); void w.offsetWidth; w.classList.add('go'); setTimeout(() => w.classList.remove('go'), 900); }
+  const flip = () => {
+    document.body.classList.toggle('loud', on);
+    if (on) applyScheme(0);
+    else { delete document.body.dataset.scheme; rimA.color.setHex(0xffffff); rimB.color.setHex(0xffffff); rimA.intensity = 1.1; rimB.intensity = 0.9; }
+  };
+  reduceMotion.matches ? flip() : setTimeout(flip, 280);   // swap while the stripes cover the screen
+}
+function pulse(dt) {
+  let target = 0;
+  if (audio.on && !reduceMotion.matches) {
+    // kick detector: low-end energy jumping above its running average
+    audio.an.getByteFrequencyData(audio.freq);
+    const f = audio.freq, e = (f[1] + f[2] + f[3] + f[4]) / 1020, t = audio.ctx.currentTime;
+    if (e > audio.avg * 1.25 + 0.05 && e > 0.12 && t - audio.lastHit > 0.2) audio.lastHit = t;
+    audio.avg += (e - audio.avg) * Math.min(1, dt * 5);
+    target = Math.exp(-(t - audio.lastHit) * 7);
+    // new colour scheme every two bars of the track
+    const bars2 = Math.floor(songTime() / (8 * 60 / TRACK.bpm)) % 4;
+    if (bars2 !== scheme && document.body.classList.contains('loud')) applyScheme(bars2);
+  }
+  bassK += (target - bassK) * Math.min(1, dt * (target > bassK ? 30 : 9));
+  document.documentElement.style.setProperty('--k', bassK.toFixed(3));
+  hoodie.scale.setScalar(1 + bassK * 0.025);
+}
+/* =========================================================
+   UI
+   ========================================================= */
+// logo + print preview use the same contour generator
+drawContour($('#logo').getContext('2d'), 174, 40, 40, 76, INK, null, 2.2, 3);
+const prev = $('#printPrev'), pctx = prev.getContext('2d');
+function drawPreview() {
+  pctx.fillStyle = '#ECEBE7'; pctx.fillRect(0, 0, prev.width, prev.height);
+  const cim = CITY[state.ed] && cityImage(state.ed);
+  if (CITY[state.ed]) { if (cim) drawFit(pctx, cim, 84, 84, 152, 152, 0.6); }
+  else drawContour(pctx, state.ed, 84, 84, 156, INK, '#ECEBE7', 1.4, 4);
+}
+
+// ruler
+const ruler = $('#ruler'), marker = $('#marker');
+for (let n = 1; n <= TOTAL; n++) {
+  const t = document.createElement('div'); t.className = 'tk'; t.dataset.n = n;
+  if (n === 1 || n % 10 === 0) { t.classList.add('dec'); t.dataset.l = pad(n); }
+  if (n === 1 || n === 50 || n === 100) t.classList.add('keep');
+  ruler.insertBefore(t, marker);
+}
+function placeMarker() {
+  marker.style.left = `${((state.ed - 0.5) / TOTAL) * 100}%`;
+  marker.classList.toggle('flip', state.ed > 90);
+}
+const rulerPick = e => { const r = ruler.getBoundingClientRect(); setEdition(clamp(Math.ceil(((e.clientX - r.left) / r.width) * TOTAL), 1, TOTAL)); };
+let rulerDrag = false;
+ruler.addEventListener('pointerdown', e => { rulerDrag = true; ruler.setPointerCapture(e.pointerId); rulerPick(e); });
+ruler.addEventListener('pointermove', e => { if (rulerDrag) rulerPick(e); });
+ruler.addEventListener('pointerup', () => rulerDrag = false);
+ruler.addEventListener('pointercancel', () => rulerDrag = false);
+let wheelAcc = 0;
+$('.foot').addEventListener('wheel', e => {
+  e.preventDefault(); wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  while (Math.abs(wheelAcc) >= 40) { setEdition(state.ed + Math.sign(wheelAcc)); wheelAcc -= 40 * Math.sign(wheelAcc); }
+}, { passive: false });
+
+// stock sheet with hand-drawn strikes / circle
+const grid = $('#grid');
+function strikeSVG(n) {
+  const r = mulberry(n * 31), j = () => (r() - 0.5) * 8;
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M${6 + j()} ${32 + j()} Q${20 + j()} ${22 + j()} ${34 + j()} ${7 + j()}"/></svg>`;
+}
+const circleSVG = `<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20.5" rx="16" ry="13" transform="rotate(-8 20 20)"/><path d="M8 13 Q12 6 23 6.5"/></svg>`;
+function renderGrid() {
+  grid.innerHTML = '';
+  for (let n = 1; n <= TOTAL; n++) {
+    const s = isSold(n), b = document.createElement('button');
+    b.className = `gc ${s ? 'sold' : 'av'}`; b.dataset.n = n;
+    b.setAttribute('aria-label', `Number ${n}${CITY[n] ? `, ${CITY[n].name} edition` : ''}${s ? ', sold' : ', available'}`);
+    b.innerHTML = `${pad(n)}${CITY[n] ? `<i class="cc">${CITY[n].code}</i>` : ''}${s ? strikeSVG(n) : ''}${n === state.ed ? circleSVG : ''}`;
+    grid.appendChild(b);
+  }
+}
+grid.addEventListener('click', e => { const b = e.target.closest('.gc'); if (b) { setEdition(+b.dataset.n); openSheet(false); } });
+const sheetOv = $('#sheetOv');
+function openSheet(o) { state.sheetOpen = o; if (o) renderGrid(); sheetOv.classList.toggle('open', o); }
+$('#openSheet').addEventListener('click', () => openSheet(true));
+$('#closeSheet').addEventListener('click', () => openSheet(false));
+sheetOv.addEventListener('click', e => { if (e.target === sheetOv) openSheet(false); });
+
+const underline = `<svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><path d="M2 5 Q30 2 55 4.5 T98 3" fill="none" stroke="${BLUE}" stroke-width="2" stroke-linecap="round"/></svg>`;
+function renderUI(stampAnim) {
+  const ed = state.ed, s = isSold(ed), p = pad(ed);
+  const city = CITY[ed];
+  $('#bigNum').textContent = p; $('#handNum').textContent = city ? `${city.code} ${ed}/100` : `${ed}/100`;
+  $('#catNo').textContent = city ? `SP076-${p}, ${city.name} edition` : `SP076-${p}`;
+  $('#prevCap').textContent = city ? `${city.name} metro` : `print ${p}`;
+  $('#printDesc').textContent = city ? `${city.name} metro lines` : 'contour, drawn from the serial';
+  $('#mapCredit').innerHTML = city
+    ? `. ${city.name} map: <a href="${city.src}" target="_blank" rel="noopener">${city.author}</a>, <a href="${city.licUrl}" target="_blank" rel="noopener">${city.lic}</a>, lines extracted`
+    : '';
+  $('#markerNum').textContent = p; ruler.setAttribute('aria-valuenow', ed);
+  $('#status').innerHTML = s
+    ? `<span class="stamp${stampAnim ? ' stamp-in' : ''}">sold<small>nº ${p} / 100</small></span>`
+    : `<span class="avail">Available. Only one exists.</span>`;
+  const cta = $('#cta'); cta.classList.toggle('disabled', s); cta.setAttribute('aria-disabled', s);
+  $('#ctaLbl').textContent = s ? `nº ${p} is sold` : `buy nº ${p}`;
+  ['#stockNum', '#leftNum2', '#leftNum3'].forEach(id => $(id).textContent = remaining());
+  [...ruler.querySelectorAll('.tk')].forEach((t, i) => t.classList.toggle('sold', isSold(i + 1)));
+  placeMarker();
+  if (state.sheetOpen) renderGrid();
+}
+function setEdition(n) {
+  n = clamp(n, 1, TOTAL); if (n === state.ed) return;
+  state.ed = n; renderUI(true); redrawGarment();
+}
+$('#prev').addEventListener('click', () => setEdition(state.ed - 1));
+$('#next').addEventListener('click', () => setEdition(state.ed + 1));
+$$('.vbtn').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+$('#sizes').addEventListener('click', e => {
+  const b = e.target.closest('.size'); if (!b) return;
+  state.size = b.dataset.size; $$('.size').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#needNote').textContent = '';
+});
+
+// order form
+const drawer = $('#drawer'), scrim = $('#scrim');
+function openDrawer(o) { state.drawerOpen = o; drawer.classList.toggle('open', o); scrim.classList.toggle('open', o); if (o) setTimeout(() => { $('#fName').focus({ preventScroll: true }); $('.dbody').scrollLeft = 0; }, 470); }
+$('#cta').addEventListener('click', () => {
+  if (isSold(state.ed)) return;
+  if (!state.size) { const s = $('#sizes'); s.classList.remove('need'); void s.offsetWidth; s.classList.add('need'); $('#needNote').textContent = 'pick a size first ↑'; return; }
+  $('#oItem').textContent = `Hoodie nº ${pad(state.ed)}/100, size ${state.size}`;
+  $('#checkout').hidden = false; $('#confirm').hidden = true;
+  openDrawer(true);
+});
+$('#closeDrawer').addEventListener('click', () => openDrawer(false));
+scrim.addEventListener('click', () => openDrawer(false));
+$('#form').addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target, btn = $('#submit');
+  if (btn.disabled) return;
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+  const ed = state.ed, p = pad(ed);
+  btn.disabled = true; $('#submitLbl').textContent = 'placing order…';
+  setTimeout(() => {
+    state.sold.add(ed);
+    btn.disabled = false; $('#submitLbl').textContent = `place order, €${PRICE + SHIP}`;
+    const d = new Date();
+    $('#rId').textContent = `SP076-${p}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    $('#rDate').textContent = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getFullYear()).slice(2)}`;
+    $('#rItem').textContent = `Hoodie ${p}/100, ${state.size}`; $('#rStamp').textContent = `nº ${p} / 100`;
+    $('#checkout').hidden = true; $('#confirm').hidden = false;
+    renderUI(true); redrawGarment();
+  }, 1100);
+});
+$('#backBtn').addEventListener('click', () => { openDrawer(false); $('#form').reset(); });
+
+window.addEventListener('keydown', e => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === 'Escape') { if (state.drawerOpen) openDrawer(false); else if (state.sheetOpen) openSheet(false); return; }
+  if (state.drawerOpen) return;
+  if (['1', '2', '3'].includes(e.key)) { setView(['front', 'back', 'tag'][+e.key - 1]); return; }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); setEdition(state.ed - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); setEdition(state.ed + 1); }
+  else if (e.key.toLowerCase() === 'm') toggleAudio();
+});
+
+/* =========================================================
+   LOOP
+   ========================================================= */
+const infoEl = $('.info'), shoutEl = $('#shout'), platter = $('#platter'), platMark = $('#platMark'), _p = new THREE.Vector3(), _q = new THREE.Vector3(), _r = new THREE.Vector3();
+function updatePlatter() {
+  // keep the record under the hoodie's feet; the rim dot turns with the hoodie
+  const { w, h } = viewSize();
+  const py = modelLoaded ? -1.75 : -1.95, pr = modelLoaded ? 2.15 : 2.45;
+  _p.set(0, py, 0).project(camera); _q.set(pr, py, 0).project(camera); _r.set(0, py, pr).project(camera);
+  const cx = (_p.x + 1) / 2 * w, cy = (1 - _p.y) / 2 * h;
+  const kx = Math.abs(_q.x - _p.x) / 2 * w / 480, ky = Math.max(0.05, Math.abs(_r.y - _p.y) / 2 * h / 96);
+  platter.style.opacity = state.view === 'tag' ? 0 : 1; shadowMesh.visible = state.view !== 'tag';
+  platter.style.transform = `translate(${cx - 500 * kx}px, ${cy - 110 * ky}px) scale(${kx}, ${ky})`;
+  // big loud-mode letters sit just left of the hoodie's shoulder, tucked under it a little
+  const pin = w > 860;
+  shoutEl.classList.toggle('pinned', pin);
+  if (pin) {
+    _p.set(-1.55, 0.3, 0).project(camera);
+    const ax = (_p.x + 1) / 2 * w + 16, gap = ax - (infoEl.getBoundingClientRect().right - 70);
+    shoutEl.style.left = `${ax}px`; shoutEl.style.top = `${(1 - _p.y) / 2 * h}px`;
+    shoutEl.style.fontSize = `${clamp(gap / 2.05, 70, h * 0.24)}px`;   // the 076 row is about 2em wide
+  } else { shoutEl.style.left = shoutEl.style.top = shoutEl.style.fontSize = ''; }
+  platMark.setAttribute('cx', (Math.sin(rotY) * 466).toFixed(1)); platMark.setAttribute('cy', (Math.cos(rotY) * 91).toFixed(1));
+}
+const clock = new THREE.Clock();
+function tick(forceDt) {
+  const real = clock.getDelta(), dt = Math.min(forceDt || real, 0.05), t = clock.elapsedTime, k = dt * 60;
+  if (!drag.active) {
+    if (tweenRot !== null) {
+      const d = shortAngle(rotY, tweenRot); rotY += d * Math.min(1, dt * 5);
+      if (Math.abs(d) < 0.002) { rotY = tweenRot; tweenRot = null; }
+    } else {
+      rotY += velY * k; velY *= Math.pow(0.93, k);
+      if (performance.now() - lastInteract > 6000 && state.view !== 'tag') velY += (0.003 - velY) * 0.02 * k;
+    }
+    targetRotX *= Math.pow(0.97, k);
+  }
+  rotX += (targetRotX - rotX) * Math.min(1, dt * 8);
+  hoodie.rotation.y = rotY;
+  hoodie.rotation.x = rotX + Math.sin(t * 0.9) * 0.012;
+  hoodie.position.y = BASE_Y + Math.sin(t * 1.1) * 0.025;
+  const f = Math.min(1, dt * 3.2);
+  camPos.lerp(camTarget, f); lookCur.lerp(lookTarget, f);
+  camera.position.copy(camPos); camera.lookAt(lookCur);
+  updatePlatter();
+  pulse(dt);
+  drawScope();
+  renderer.render(scene, camera);
+}
+function frame() { tick(); requestAnimationFrame(frame); }
+window.SP076 = { MODEL, audio, tick, setView, setEdition, scene, camera, renderer, hoodie, drawContour }; // dev hook for testing
+
+resize(); renderUI(false); redrawGarment(); loadHoodieModel();
+Promise.all(['400 54px "Reenie Beanie"', '500 24px Rubik', '300 19px Rubik', '800 52px Rubik', '600 26px Rubik'].map(f => document.fonts.load(f)))
+  .catch(() => {}).then(redrawGarment);
+frame();
+})();
+</script>
+</body>
+</html>

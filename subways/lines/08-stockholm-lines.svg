@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" id="svg2424" sodipodi:version="0.32" inkscape:version="0.48.1 r9760" width="2726.25" height="2370.5967" version="1.0" sodipodi:docname="Stockholm_metrosystem_map.svg" inkscape:output_extension="org.inkscape.output.svg.inkscape" style=";background:none">
+  <defs id="defs2427">
+    <filter inkscape:collect="always" id="filter32472" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32474" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32476" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32478" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32480" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32482" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32484" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32486" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32488" x="-0.038559429" width="1.0771189" y="-0.30146462" height="1.6029292" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="4.2624765" id="feGaussianBlur32490" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32528" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32530" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32532" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32534" />
+    </filter>
+    <filter inkscape:collect="always" id="filter32536" x="-0.03383721" width="1.0676744" y="-0.26454544" height="1.5290909" color-interpolation-filters="sRGB">
+      <feGaussianBlur inkscape:collect="always" stdDeviation="3.7404678" id="feGaussianBlur32538" />
+    </filter>
+  </defs>
+  <sodipodi:namedview inkscape:window-height="795" inkscape:window-width="1311" inkscape:pageshadow="2" inkscape:pageopacity="0.0" guidetolerance="10.0" gridtolerance="10.0" objecttolerance="10.0" borderopacity="1.0" bordercolor="#666666" pagecolor="#ffffff" id="base" inkscape:zoom="0.3" inkscape:cx="532.63898" inkscape:cy="656.45088" inkscape:window-x="99" inkscape:window-y="28" inkscape:current-layer="layer_mainland" showgrid="false" inkscape:window-maximized="0" fit-margin-top="0" fit-margin-left="0" fit-margin-right="0" fit-margin-bottom="0" />
+  <g inkscape:groupmode="layer" id="layer_sealakebackdrop" inkscape:label="Baltic-Mälaren" style="display:inline" transform="translate(490.5,190.3885)" sodipodi:insensitive="true">
+    </g>
+  <g inkscape:groupmode="layer" id="layer_mainland" inkscape:label="Mainland" style="display:inline" transform="translate(490.5,190.3885)" sodipodi:insensitive="true">
+    </g>
+  <g inkscape:groupmode="layer" id="layer_islands" inkscape:label="Islands" style="display:inline" transform="translate(490.5,190.3885)" sodipodi:insensitive="true">
+    </g>
+  <g inkscape:groupmode="layer" id="layer_lakes" inkscape:label="Lakes" style="display:inline" sodipodi:insensitive="true" transform="translate(490.5,190.3885)">
+    </g>
+  <g inkscape:groupmode="layer" id="layer4" inkscape:label="Linien" style="display:inline" sodipodi:insensitive="true" transform="translate(490.5,190.3885)">
+    <path style="stroke:#0080ff;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="M 1363.8462,992.53846 1347.6923,977.92308 1140,977.15385 l -60,64.61535 -64.6154,-1.5384 -844.61537,-842.30772 -249.230768,-1.53846" id="path7243" inkscape:connector-curvature="0" />
+    <path style="stroke:#00bb00;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;fill:none" d="m 1406.6667,2142.1111 0,-83.3333 -60,-64.4445 0,-80 64.4444,-64.4444 -2.2222,-171.1111 66.6667,-64.4445 0,-113.3333 -222.2223,-220 0,-434.44444 -74.4444,-74.44445 -67.7778,-1.11111 -60,64.44444 1.1111,108.88889 -95.55553,98.88887 -65.55556,0 -100,-98.88887 -610,0 -254.444443,-255.55555 1.111111,-98.88889 -83.333338,-81.11111 -93.33333,-1.11111 -125.55555,128.88889" id="path5622" inkscape:connector-curvature="0" />
+    <path style="stroke:#ff0101;stroke-width:25;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;fill:none" d="m 931,66 110,109 -1,226 291,287 0,156" id="path32330" inkscape:connector-curvature="0" sodipodi:nodetypes="ccccc" />
+    <path style="stroke:#ff0101;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m 1482,647 0,98 -102,102 -48,-2 -70,66" id="path32334" inkscape:connector-curvature="0" />
+    <path style="stroke:#ff0101;stroke-width:25;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m 632,1797 124,-128 0,-212 266,-266 208,0 26,-32" id="path32336" inkscape:connector-curvature="0" />
+    <path style="stroke:#ff0101;stroke-width:25;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m -448,2085 412,0 152,-154 0,-234 190,-188 248,0 156,-156 150,0" id="path32338" inkscape:connector-curvature="0" sodipodi:nodetypes="cccccccc" />
+    <path style="stroke:#ff0000;stroke-width:12.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m 1259.6965,902.06207 1.6368,260.99693" id="path6393" inkscape:connector-curvature="0" sodipodi:nodetypes="cc" />
+    <path style="stroke:#ff0000;stroke-width:12.41979218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m 1274.8145,907.16112 -13.9217,13.8241" id="path6395" inkscape:connector-curvature="0" />
+    <path style="stroke:#0080ff;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;fill:none" d="m 759.23077,787.92308 0,-199.23077 -171.53846,-173.84616 0,-220 -292.30769,-292.307688" id="path7245" inkscape:connector-curvature="0" />
+    <path style="stroke:#00bb00;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;fill:none" d="m 1473.3333,1500.3333 58,57.3334 84,0 254,256" id="path7775" inkscape:connector-curvature="0" />
+    <path style="stroke:#00bb00;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;fill:none" d="m 1393.3333,1420.3333 1.3334,46 L 1265.3333,1597 1266,1761 l -202.6667,202 -245.99997,0" id="path7777" inkscape:connector-curvature="0" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer3" inkscape:label="Streckennetz" style="display:inline" sodipodi:insensitive="true" transform="translate(490.5,190.3885)">
+    <g id="g7811" transform="translate(26,-24)">
+      </g>
+  </g>
+</svg>

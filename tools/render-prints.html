@@ -24,11 +24,11 @@ const DPI = 300;
 // art in the wearer's left corner. A small file on its own gets stretched by Gelato to fill the front.
 // x0/y0 = top-left of the 12 cm chest block in the area. Art centre is 7.5 cm to the wearer's left of
 // the centre line, 1.5 cm below the top: at 9.5 cm Gelato's preview cut the outer edge off (nº 076).
-// Back: the design is drawn 18% larger than on the site (contour about 25 cm wide), moved up to fit.
+// Back: the design is drawn 10% larger than on the site (contour about 23 cm wide); 18% looked too big on nº 042.
 const SPEC = {
   front: { cm: 30, layout: { areaCm: 30, blockCm: 12, x0Cm: 16.5, y0Cm: 1.5 },
            note: "full front area; art about 7.7 cm wide on the wearer's left chest (right side of the file)" },
-  back:  { cm: 30, layout: { scale: 1.18, dy: -39 }, note: 'centred on the back; contour about 25 cm wide' },
+  back:  { cm: 30, layout: { scale: 1.10, dy: -30 }, note: 'centred on the back; contour about 23 cm wide' },
 };
 const sides = (new URLSearchParams(location.search).get('side') || 'front,back').split(',');   // ?side=front re-renders fronts only
 const SAVE_URL = 'http://127.0.0.1:5175/save';

@@ -1,5 +1,4 @@
 
-audio/
 model1/
 model2/
 model3/
@@ -10,3 +9,14 @@ subways/*.svg
 subways/*.png
 
 _shot.html
+
+# production print files: uploaded to private storage, not published
+prints/
+
+# backend: dependencies, local state and secrets
+backend/node_modules/
+backend/.wrangler/
+backend/.dev.vars
+
+# second git repo (private: prints, old versions, working files) lives alongside this one
+.git-private/

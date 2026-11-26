@@ -1,0 +1,18 @@
+# Copy to .dev.vars for local testing (`npm run dev`). Never commit .dev.vars.
+# On Cloudflare set each one with:  npx wrangler secret put NAME
+
+# Stripe → Developers → API keys. Use the sk_test_… key while testing.
+STRIPE_SECRET_KEY=sk_test_...
+# From `stripe listen --forward-to localhost:8787/api/stripe/webhook` locally,
+# or Stripe → Developers → Webhooks → your endpoint → Signing secret when live.
+STRIPE_WEBHOOK_SECRET=whsec_...
+# Gelato dashboard → Developer → API keys
+GELATO_API_KEY=
+# Any long random string. Put it in the Gelato webhook URL: …/api/gelato/webhook?token=THIS
+GELATO_WEBHOOK_TOKEN=
+# Any long random string. Signs the private links Gelato uses to download print files.
+FILE_SIGNING_SECRET=
+# Any random string. Mixed into hashed visitor IPs.
+IP_SALT=
+# Optional, for "your hoodie shipped" emails (resend.com)
+RESEND_API_KEY=

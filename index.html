@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SP076 – archive 01 – 100 hoodies, 100 prints</title>
 <meta name="theme-color" content="#FFFFFF">
+<!-- Shop backend (backend/ Cloudflare Worker). Empty = demo mode: nothing is charged. -->
+<meta name="sp076-api" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..900&family=Reenie+Beanie&display=swap" rel="stylesheet">
@@ -72,6 +74,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .status{margin-top:52px;min-height:40px;display:flex;align-items:center}
 .avail{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--sans)}
 .avail::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--ink)}
+.avail.held{font-weight:400;max-width:30ch;line-height:1.35}
+.avail.held::before{flex:none;background:transparent;border:2px solid var(--ink)}
 .stamp{display:inline-block;padding:5px 12px 3px;border:4px solid var(--red);color:var(--red);font:800 28px/1 var(--sans);letter-spacing:.02em;transform:rotate(-6deg);filter:url(#rough)}
 .stamp small{display:block;font:600 11px var(--sans);margin-top:2px}
 .stamp-in{animation:thunk .28s cubic-bezier(.3,1.6,.5,1)}
@@ -448,7 +452,7 @@ legend{font:700 16px var(--sans);margin-bottom:6px}
           <hr>
           <div class="r big-r"><span>Total EUR</span><span>192.00</span></div>
           <div class="stamp">sold<small id="rStamp">nº 042 / 100</small></div>
-          <div class="thanks hand-ink">Cheers. This number’s yours now.<br>It won’t be made again.</div>
+          <div class="thanks hand-ink" id="thanksMsg">Cheers. This number’s yours now.<br>It won’t be made again.</div>
         </div>
         <button class="ghost" id="backBtn" type="button">back to the hoodies</button>
       </div>
@@ -469,14 +473,15 @@ legend{font:700 16px var(--sans);margin-bottom:6px}
    ========================================================= */
 const TOTAL = 100, PRICE = 180, SHIP = 12;
 const SEED_AVAILABLE = [3, 9, 17, 23, 31, 38, 42, 47, 56, 64, 71, 76, 88, 96]; // 14 / 100
-const state = { ed: 42, size: null, sold: new Set(), view: 'front', drawerOpen: false, sheetOpen: false };
-for (let i = 1; i <= TOTAL; i++) if (!SEED_AVAILABLE.includes(i)) state.sold.add(i);
+const API = (document.querySelector('meta[name="sp076-api"]').content || '').replace(/\/+$/, '');   // live shop if set
+const state = { ed: 42, size: null, sold: new Set(), held: new Set(), view: 'front', drawerOpen: false, sheetOpen: false };
+if (!API) for (let i = 1; i <= TOTAL; i++) if (!SEED_AVAILABLE.includes(i)) state.sold.add(i);   // demo stock
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const pad = n => String(n).padStart(3, '0');
-const isSold = n => state.sold.has(n);
-const remaining = () => TOTAL - state.sold.size;
+const isSold = n => state.sold.has(n) || state.held.has(n);   // unavailable: sold, or in someone's checkout
+const remaining = () => TOTAL - state.sold.size - state.held.size;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const mulberry = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -945,12 +950,13 @@ function drawFit(ctx, im, cx, cy, bw, bh, bold) {
   const offs = bold ? [[0, 0], [bold, 0], [-bold, 0], [0, bold], [0, -bold]] : [[0, 0]];
   offs.forEach(([dx, dy]) => ctx.drawImage(im, cx - w / 2 + dx, cy - h / 2 + dy, w, h));
 }
-function drawChestPrint(ed) {
-  const { ctx, c } = chestPrint; ctx.clearRect(0, 0, c.width, c.height);
-  const city = CITY[ed], cim = cityImage(ed);
+// The chest and back artwork, drawn in 512 px (chest) and 1024 px (back) design space.
+// forPrint = true is the production file: no simulated wear, solid ink.
+function drawChestArt(ctx, ed, cim, forPrint) {
+  const city = CITY[ed];
   if (city) { if (cim) drawFit(ctx, cim, 256, 185, 360, 330, 2.2); }
   else drawContour(ctx, ed, 256, 190, 300, BONE, null, 3, 4);
-  inkWear(ctx, 90, 30, 330, 330, ed + 3);
+  if (!forPrint) inkWear(ctx, 90, 30, 330, 330, ed + 3);
   // hand-numbered fraction underneath, like the sketch
   ctx.fillStyle = BONE; ctx.strokeStyle = BONE; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
   ctx.save(); ctx.translate(262, 410); ctx.rotate(-0.05);
@@ -960,18 +966,40 @@ function drawChestPrint(ed) {
   ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-half, 6); ctx.quadraticCurveTo(0, 0, half + 4, 4); ctx.stroke();
   ctx.lineWidth = 2.4; ctx.font = '400 80px "Reenie Beanie"'; ctx.fillText('100', 0, 74); ctx.strokeText('100', 0, 74);
   ctx.restore();
+}
+function drawBackArt(ctx, ed, cim, forPrint) {
+  const city = CITY[ed];
+  if (city) { if (cim) drawFit(ctx, cim, 512, 430, 800, 760, 1.8); }
+  else drawContour(ctx, ed, 512, 440, 720, BONE, null, 2.4, 5);
+  if (!forPrint) inkWear(ctx, 152, 80, 720, 720, ed + 11);
+  ctx.fillStyle = forPrint ? BONE : 'rgba(232,228,218,.85)'; ctx.textAlign = 'center';
+  ctx.font = '500 24px Rubik';
+  ctx.fillText(city ? `SP076   ${city.code} nº ${pad(ed)}/100   ${city.name.toLowerCase()} metro` : `SP076   nº ${pad(ed)}/100`, 512, 862);
+}
+function drawChestPrint(ed) {
+  const { ctx, c } = chestPrint; ctx.clearRect(0, 0, c.width, c.height);
+  drawChestArt(ctx, ed, cityImage(ed), false);
   chestPrint.t.needsUpdate = true;
 }
 function drawBackPrint(ed) {
   const { ctx, c } = backPrint; ctx.clearRect(0, 0, c.width, c.height);
-  const city = CITY[ed], cim = cityImage(ed);
-  if (city) { if (cim) drawFit(ctx, cim, 512, 430, 800, 760, 1.8); }
-  else drawContour(ctx, ed, 512, 440, 720, BONE, null, 2.4, 5);
-  inkWear(ctx, 152, 80, 720, 720, ed + 11);
-  ctx.fillStyle = 'rgba(232,228,218,.85)'; ctx.textAlign = 'center';
-  ctx.font = '500 24px Rubik';
-  ctx.fillText(city ? `SP076   ${city.code} nº ${pad(ed)}/100   ${city.name.toLowerCase()} metro` : `SP076   nº ${pad(ed)}/100`, 512, 862);
+  drawBackArt(ctx, ed, cityImage(ed), false);
   backPrint.t.needsUpdate = true;
+}
+// Production print file for one edition: a transparent PNG canvas `px` wide.
+// Used by tools/render-prints.html; waits for fonts and the city map first.
+async function renderPrintFile(ed, side, px) {
+  await Promise.all(['400 86px "Reenie Beanie"', '500 24px Rubik'].map(f => document.fonts.load(f)));
+  let cim = null;
+  if (CITY[ed]) {
+    cim = new Image(); cim.src = `subways/lines/${CITY[ed].file}-lines.png`;
+    await cim.decode();
+  }
+  const design = side === 'back' ? 1024 : 512, c = document.createElement('canvas');
+  c.width = c.height = px;
+  const ctx = c.getContext('2d'); ctx.scale(px / design, px / design);
+  (side === 'back' ? drawBackArt : drawChestArt)(ctx, ed, cim, true);
+  return c;
 }
 function drawFront() {
   const { ctx, c } = frontTex, s = 0.6;
@@ -1377,11 +1405,13 @@ function renderUI(stampAnim) {
     ? `. ${city.name} map: <a href="${city.src}" target="_blank" rel="noopener">${city.author}</a>, <a href="${city.licUrl}" target="_blank" rel="noopener">${city.lic}</a>, lines extracted`
     : '';
   $('#markerNum').textContent = p; ruler.setAttribute('aria-valuenow', ed);
-  $('#status').innerHTML = s
+  $('#status').innerHTML = state.held.has(ed) && !state.sold.has(ed)
+    ? `<span class="avail held">On hold: someone is checking out. Free again within 30 min if they don't buy.</span>`
+    : s
     ? `<span class="stamp${stampAnim ? ' stamp-in' : ''}">sold<small>nº ${p} / 100</small></span>`
     : `<span class="avail">Available. Only one exists.</span>`;
   const cta = $('#cta'); cta.classList.toggle('disabled', s); cta.setAttribute('aria-disabled', s);
-  $('#ctaLbl').textContent = s ? `nº ${p} is sold` : `buy nº ${p}`;
+  $('#ctaLbl').textContent = state.held.has(ed) && !state.sold.has(ed) ? `nº ${p} is on hold` : s ? `nº ${p} is sold` : `buy nº ${p}`;
   ['#stockNum', '#leftNum2', '#leftNum3'].forEach(id => $(id).textContent = remaining());
   [...ruler.querySelectorAll('.tk')].forEach((t, i) => t.classList.toggle('sold', isSold(i + 1)));
   placeMarker();
@@ -1406,6 +1436,7 @@ function openDrawer(o) { state.drawerOpen = o; drawer.classList.toggle('open', o
 $('#cta').addEventListener('click', () => {
   if (isSold(state.ed)) return;
   if (!state.size) { const s = $('#sizes'); s.classList.remove('need'); void s.offsetWidth; s.classList.add('need'); $('#needNote').textContent = 'pick a size first ↑'; return; }
+  if (API) { startCheckout(); return; }
   $('#oItem').textContent = `Hoodie nº ${pad(state.ed)}/100, size ${state.size}`;
   $('#checkout').hidden = false; $('#confirm').hidden = true;
   openDrawer(true);
@@ -1431,6 +1462,71 @@ $('#form').addEventListener('submit', e => {
   }, 1100);
 });
 $('#backBtn').addEventListener('click', () => { openDrawer(false); $('#form').reset(); });
+
+/* ---------- live shop (only when the sp076-api meta tag is set) ---------- */
+async function api(path, body) {
+  const res = await fetch(API + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || 'The shop could not be reached. Try again in a moment.'), { status: res.status });
+  return data;
+}
+async function loadStock() {
+  try {
+    const d = await api('/api/editions');
+    state.sold = new Set(d.sold); state.held = new Set(d.held);
+    renderUI(false); redrawGarment();
+  } catch (err) { console.warn('Stock not loaded:', err.message); }
+}
+async function startCheckout() {
+  const lbl = $('#ctaLbl'), ed = state.ed;
+  lbl.textContent = 'opening checkout…';
+  try {
+    const { url } = await api('/api/checkout', { edition: ed, size: state.size });
+    location.href = url;                                   // Stripe's payment page
+  } catch (err) {
+    $('#needNote').textContent = err.message;
+    await loadStock();
+  }
+}
+// Back from Stripe: ?order=paid&session_id=… or ?order=cancelled&hold=…&edition=…
+async function handleReturn() {
+  const q = new URLSearchParams(location.search), kind = q.get('order');
+  if (!kind) return;
+  history.replaceState(null, '', location.pathname);
+  if (kind === 'cancelled') {
+    const ed = Number(q.get('edition'));
+    try { await api('/api/release', { hold: q.get('hold') }); } catch (err) { console.warn(err.message); }
+    if (ed) state.ed = ed;
+    await loadStock();
+    $('#needNote').textContent = 'checkout cancelled, the number is free again';
+    return;
+  }
+  if (kind === 'paid') {
+    const id = q.get('session_id');
+    $('#checkout').hidden = true; $('#confirm').hidden = false;
+    $('#rId').textContent = 'confirming payment…'; openDrawer(true);
+    for (let i = 0; i < 15; i++) {                         // Stripe's webhook usually lands within seconds
+      const o = await api(`/api/order?session_id=${encodeURIComponent(id)}`).catch(() => ({ status: 'pending' }));
+      if (o.status !== 'pending') {
+        const p = pad(o.edition), d = new Date(o.created_at * 1000);
+        state.ed = o.edition;
+        $('#rId').textContent = o.reference;
+        $('#rDate').textContent = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getFullYear()).slice(2)}`;
+        $('#rItem').textContent = `Hoodie ${p}/100, ${o.size}`; $('#rStamp').textContent = `nº ${p} / 100`;
+        $('#thanksMsg').innerHTML = 'Paid. This number’s yours now.<br>We’ll email tracking when it ships.';
+        await loadStock();
+        return;
+      }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    $('#rId').textContent = 'payment received, confirmation is on its way by email';
+  }
+}
+if (API) {
+  $('.note').textContent = 'You pay on Stripe’s secure page. The number is held for you for 30 minutes while you check out.';
+  loadStock().then(handleReturn);
+  setInterval(loadStock, 60000);
+}
 
 window.addEventListener('keydown', e => {
   if (e.target.matches('input, select, textarea')) return;
@@ -1492,7 +1588,7 @@ function tick(forceDt) {
   renderer.render(scene, camera);
 }
 function frame() { tick(); requestAnimationFrame(frame); }
-window.SP076 = { MODEL, audio, tick, setView, setEdition, scene, camera, renderer, hoodie, drawContour }; // dev hook for testing
+window.SP076 = { renderPrintFile, CITY, MODEL, audio, tick, setView, setEdition, scene, camera, renderer, hoodie, drawContour }; // dev hook for testing
 
 resize(); renderUI(false); redrawGarment(); loadHoodieModel();
 Promise.all(['400 54px "Reenie Beanie"', '500 24px Rubik', '300 19px Rubik', '800 52px Rubik', '600 26px Rubik'].map(f => document.fonts.load(f)))

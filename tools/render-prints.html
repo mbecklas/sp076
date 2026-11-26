@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SP076 – render print files</title>
+<style>
+  body{font:14px/1.5 system-ui,sans-serif;margin:24px;max-width:760px}
+  iframe{width:400px;height:250px;border:1px solid #ccc}
+  #log{white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace;background:#f4f4f2;padding:10px;max-height:50vh;overflow:auto}
+</style>
+</head>
+<body>
+<h1>SP076 print files</h1>
+<p>Renders the production PNGs for all 100 editions with the same drawing code as the shop page and
+sends them to <code>tools/save_prints.py</code>, which writes them into <code>prints/</code>.
+Start that script first, then open this page through the local preview server.</p>
+<p id="status">Loading the shop page…</p>
+<div id="log"></div>
+<iframe id="shop" src="../index.html" title="shop page used for drawing"></iframe>
+<script>
+// Physical sizes at 300 dpi. Change here and re-run if Gelato's print area needs something else.
+const DPI = 300;
+const SPEC = {
+  front: { cm: 12, note: "wearer's left chest; artwork itself is about 7.7 cm wide" },
+  back:  { cm: 30, note: 'centred on the back; artwork itself is about 21 cm wide' },
+};
+const SAVE_URL = 'http://127.0.0.1:5175/save';
+const px = cm => Math.round(cm / 2.54 * DPI);
+const pad = n => String(n).padStart(3, '0');
+const log = t => { document.getElementById('log').textContent += t + '\n'; };
+const status = t => { document.getElementById('status').textContent = t; };
+const only = new URLSearchParams(location.search).get('only');   // e.g. ?only=11,42 to test a few
+
+document.getElementById('shop').addEventListener('load', async () => {
+  const w = document.getElementById('shop').contentWindow;
+  const api = w.SP076;
+  if (!api || !api.renderPrintFile) { status('The shop page has no renderPrintFile hook.'); return; }
+  const eds = only ? only.split(',').map(Number) : Array.from({ length: 100 }, (_, i) => i + 1);
+  const manifest = { dpi: DPI, generated: new Date().toISOString(), sides: {}, editions: [] };
+  for (const [side, s] of Object.entries(SPEC)) manifest.sides[side] = { widthCm: s.cm, heightCm: s.cm, px: px(s.cm), note: s.note };
+  let done = 0;
+  try {
+    for (const ed of eds) {
+      const city = api.CITY[ed];
+      const entry = { edition: ed, city: city ? { code: city.code, name: city.name, mapAuthor: city.author, licence: city.lic, source: city.src } : null, files: {} };
+      for (const side of Object.keys(SPEC)) {
+        const canvas = await api.renderPrintFile(ed, side, px(SPEC[side].cm));
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const name = `${side}/SP076-${pad(ed)}-${side}.png`;
+        const res = await fetch(`${SAVE_URL}?name=${encodeURIComponent(name)}`, { method: 'POST', body: blob });
+        if (!res.ok) throw new Error(`saving ${name} failed: ${res.status}`);
+        entry.files[side] = name;
+        log(`${name}  ${(blob.size / 1e6).toFixed(1)} MB`);
+      }
+      manifest.editions.push(entry);
+      status(`Rendered ${++done} of ${eds.length}`);
+    }
+    const res = await fetch(`${SAVE_URL}?name=manifest.json`, { method: 'POST', body: JSON.stringify(manifest, null, 2) });
+    if (!res.ok) throw new Error('saving manifest failed');
+    status(`Done: ${done} editions, ${done * 2} files.`);
+    document.title = 'DONE';
+  } catch (e) {
+    status(`Stopped: ${e.message}`); document.title = 'FAILED'; log(String(e.stack || e));
+  }
+});
+</script>
+</body>
+</html>

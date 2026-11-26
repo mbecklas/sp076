@@ -1,0 +1,42 @@
+name = "sp076-shop"
+main = "src/index.js"
+compatibility_date = "2025-11-01"
+
+# Plain settings. Secrets (API keys) are NOT here: set them with
+#   npx wrangler secret put STRIPE_SECRET_KEY   (and the others listed in README.md)
+# and for local testing put them in backend/.dev.vars (gitignored).
+[vars]
+# The shop page's address. Used for Stripe's return links and for CORS.
+SITE_URL = "https://mbecklas.github.io/sp076/"
+ALLOWED_ORIGINS = "https://mbecklas.github.io,http://localhost:5174"
+# This Worker's own public address (filled in after the first deploy); Gelato downloads the print files from here.
+WORKER_URL = "https://sp076-shop.YOUR-SUBDOMAIN.workers.dev"
+PRICE_CENTS = "18000"
+SHIPPING_CENTS = "1200"
+CURRENCY = "eur"
+# Countries Stripe Checkout lets customers ship to (two-letter codes).
+SHIP_COUNTRIES = "GB,IE,NL,BE,LU,DE,FR,PT,ES,IT,AT,DK,SE,FI,PL,CZ"
+# "draft" = Gelato stores the order but prints nothing. Switch to "order" when you go live.
+GELATO_ORDER_TYPE = "draft"
+# Gelato product UID per size, copied from the chosen hoodie in Gelato's catalogue.
+GELATO_PRODUCTS = '{"S":"","M":"","L":"","XL":""}'
+# Gelato file types for each print area. "default" is the front; check the chosen product's print areas.
+GELATO_FRONT_FILE_TYPE = "default"
+GELATO_BACK_FILE_TYPE = "back"
+# Leave empty for Gelato's cheapest method, or set e.g. "normal" / "express".
+GELATO_SHIPMENT_METHOD = ""
+# Sender for shipping emails (needs RESEND_API_KEY and a verified domain at resend.com). Empty = no emails.
+EMAIL_FROM = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sp076"
+database_id = "af516461-cbbd-463e-b108-d787e705a2a0"
+
+# The 200 print files ship with the Worker as private static assets (free plan, no card needed).
+# run_worker_first: every request goes through the Worker, which only hands out a file
+# for a valid signed link, so nobody can browse or download them directly.
+[assets]
+directory = "../prints"
+binding = "ASSETS"
+run_worker_first = true

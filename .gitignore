@@ -20,3 +20,6 @@ backend/.dev.vars
 
 # second git repo (private: prints, old versions, working files) lives alongside this one
 .git-private/
+
+# marketing plans and drafts: private repo only
+marketing/

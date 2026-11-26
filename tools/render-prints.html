@@ -20,14 +20,15 @@ Start that script first, then open this page through the local preview server.</
 <script>
 // Physical sizes at 300 dpi. Change here and re-run if Gelato's print area needs something else.
 const DPI = 300;
-// The front file covers the whole front print area (same 30 cm square as the back, which Gelato
-// prints at true size) with the chest art in the wearer's left corner. A small file on its own
-// gets stretched by Gelato to fill the front. x0/y0 = top-left of the 12 cm chest block in the area:
-// art centre 9.5 cm to the wearer's left of the centre line, 1.5 cm below the top of the area.
+// The front file covers the whole front print area (same 30 cm square as the back) with the chest
+// art in the wearer's left corner. A small file on its own gets stretched by Gelato to fill the front.
+// x0/y0 = top-left of the 12 cm chest block in the area. Art centre is 7.5 cm to the wearer's left of
+// the centre line, 1.5 cm below the top: at 9.5 cm Gelato's preview cut the outer edge off (nº 076).
+// Back: the design is drawn 18% larger than on the site (contour about 25 cm wide), moved up to fit.
 const SPEC = {
-  front: { cm: 30, layout: { areaCm: 30, blockCm: 12, x0Cm: 18.5, y0Cm: 1.5 },
+  front: { cm: 30, layout: { areaCm: 30, blockCm: 12, x0Cm: 16.5, y0Cm: 1.5 },
            note: "full front area; art about 7.7 cm wide on the wearer's left chest (right side of the file)" },
-  back:  { cm: 30, note: 'centred on the back; artwork itself is about 21 cm wide' },
+  back:  { cm: 30, layout: { scale: 1.18, dy: -39 }, note: 'centred on the back; contour about 25 cm wide' },
 };
 const sides = (new URLSearchParams(location.search).get('side') || 'front,back').split(',');   // ?side=front re-renders fronts only
 const SAVE_URL = 'http://127.0.0.1:5175/save';

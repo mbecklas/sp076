@@ -1004,7 +1004,11 @@ async function renderPrintFile(ed, side, px, layout) {
     const perCm = px / layout.areaCm;
     ctx.translate(layout.x0Cm * perCm, layout.y0Cm * perCm);
     ctx.scale(layout.blockCm * perCm / design, layout.blockCm * perCm / design);
-  } else ctx.scale(px / design, px / design);
+  } else {
+    ctx.scale(px / design, px / design);
+    // back layout { scale, dy }: enlarge the design around its centre line, dy shifts it up/down (design units)
+    if (side === 'back' && layout) { ctx.translate(design / 2 * (1 - layout.scale), layout.dy || 0); ctx.scale(layout.scale, layout.scale); }
+  }
   (side === 'back' ? drawBackArt : drawChestArt)(ctx, ed, cim, true);
   return c;
 }

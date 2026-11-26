@@ -988,7 +988,9 @@ function drawBackPrint(ed) {
 }
 // Production print file for one edition: a transparent PNG canvas `px` wide.
 // Used by tools/render-prints.html; waits for fonts and the city map first.
-async function renderPrintFile(ed, side, px) {
+// layout (front only): { areaCm, blockCm, x0Cm, y0Cm } places the chest block inside a full
+// front print area, so Gelato prints it small on the left chest instead of stretching it.
+async function renderPrintFile(ed, side, px, layout) {
   await Promise.all(['400 86px "Reenie Beanie"', '500 24px Rubik'].map(f => document.fonts.load(f)));
   let cim = null;
   if (CITY[ed]) {
@@ -997,7 +999,12 @@ async function renderPrintFile(ed, side, px) {
   }
   const design = side === 'back' ? 1024 : 512, c = document.createElement('canvas');
   c.width = c.height = px;
-  const ctx = c.getContext('2d'); ctx.scale(px / design, px / design);
+  const ctx = c.getContext('2d');
+  if (side === 'front' && layout) {
+    const perCm = px / layout.areaCm;
+    ctx.translate(layout.x0Cm * perCm, layout.y0Cm * perCm);
+    ctx.scale(layout.blockCm * perCm / design, layout.blockCm * perCm / design);
+  } else ctx.scale(px / design, px / design);
   (side === 'back' ? drawBackArt : drawChestArt)(ctx, ed, cim, true);
   return c;
 }

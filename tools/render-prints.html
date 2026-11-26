@@ -20,10 +20,16 @@ Start that script first, then open this page through the local preview server.</
 <script>
 // Physical sizes at 300 dpi. Change here and re-run if Gelato's print area needs something else.
 const DPI = 300;
+// The front file covers the whole front print area (same 30 cm square as the back, which Gelato
+// prints at true size) with the chest art in the wearer's left corner. A small file on its own
+// gets stretched by Gelato to fill the front. x0/y0 = top-left of the 12 cm chest block in the area:
+// art centre 9.5 cm to the wearer's left of the centre line, 1.5 cm below the top of the area.
 const SPEC = {
-  front: { cm: 12, note: "wearer's left chest; artwork itself is about 7.7 cm wide" },
+  front: { cm: 30, layout: { areaCm: 30, blockCm: 12, x0Cm: 18.5, y0Cm: 1.5 },
+           note: "full front area; art about 7.7 cm wide on the wearer's left chest (right side of the file)" },
   back:  { cm: 30, note: 'centred on the back; artwork itself is about 21 cm wide' },
 };
+const sides = (new URLSearchParams(location.search).get('side') || 'front,back').split(',');   // ?side=front re-renders fronts only
 const SAVE_URL = 'http://127.0.0.1:5175/save';
 const px = cm => Math.round(cm / 2.54 * DPI);
 const pad = n => String(n).padStart(3, '0');
@@ -37,14 +43,14 @@ document.getElementById('shop').addEventListener('load', async () => {
   if (!api || !api.renderPrintFile) { status('The shop page has no renderPrintFile hook.'); return; }
   const eds = only ? only.split(',').map(Number) : Array.from({ length: 100 }, (_, i) => i + 1);
   const manifest = { dpi: DPI, generated: new Date().toISOString(), sides: {}, editions: [] };
-  for (const [side, s] of Object.entries(SPEC)) manifest.sides[side] = { widthCm: s.cm, heightCm: s.cm, px: px(s.cm), note: s.note };
+  for (const [side, s] of Object.entries(SPEC)) manifest.sides[side] = { widthCm: s.cm, heightCm: s.cm, px: px(s.cm), layout: s.layout || null, note: s.note };
   let done = 0;
   try {
     for (const ed of eds) {
       const city = api.CITY[ed];
       const entry = { edition: ed, city: city ? { code: city.code, name: city.name, mapAuthor: city.author, licence: city.lic, source: city.src } : null, files: {} };
-      for (const side of Object.keys(SPEC)) {
-        const canvas = await api.renderPrintFile(ed, side, px(SPEC[side].cm));
+      for (const side of Object.keys(SPEC).filter(x => sides.includes(x))) {
+        const canvas = await api.renderPrintFile(ed, side, px(SPEC[side].cm), SPEC[side].layout);
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
         const name = `${side}/SP076-${pad(ed)}-${side}.png`;
         const res = await fetch(`${SAVE_URL}?name=${encodeURIComponent(name)}`, { method: 'POST', body: blob });
@@ -52,6 +58,7 @@ document.getElementById('shop').addEventListener('load', async () => {
         entry.files[side] = name;
         log(`${name}  ${(blob.size / 1e6).toFixed(1)} MB`);
       }
+      for (const side of Object.keys(SPEC)) entry.files[side] = `${side}/SP076-${pad(ed)}-${side}.png`;   // sides not re-rendered keep their file
       manifest.editions.push(entry);
       status(`Rendered ${++done} of ${eds.length}`);
     }

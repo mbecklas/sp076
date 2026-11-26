@@ -10,7 +10,7 @@ compatibility_date = "2025-11-01"
 SITE_URL = "https://mbecklas.github.io/sp076/"
 ALLOWED_ORIGINS = "https://mbecklas.github.io,http://localhost:5174"
 # This Worker's own public address (filled in after the first deploy); Gelato downloads the print files from here.
-WORKER_URL = "https://sp076-shop.YOUR-SUBDOMAIN.workers.dev"
+WORKER_URL = "https://sp076-shop.sp076-shop.workers.dev"
 PRICE_CENTS = "18000"
 SHIPPING_CENTS = "1200"
 CURRENCY = "eur"

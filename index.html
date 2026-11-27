@@ -360,7 +360,7 @@ legend{font:700 16px var(--sans);margin-bottom:6px}
       <nav class="views" aria-label="View">
         <button class="vbtn active" data-view="front">front <kbd>1</kbd></button>
         <button class="vbtn" data-view="back">back <kbd>2</kbd></button>
-        <button class="vbtn" data-view="tag">label <kbd>3</kbd></button>
+        <button class="vbtn" data-view="logo">logo <kbd>3</kbd></button>
         <div class="drag-note hand-ink">or drag it round ↻</div>
       </nav>
       <div class="buy">
@@ -603,10 +603,9 @@ function canvasTex(w, h) {
   const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
   return { c, ctx: c.getContext('2d'), t };
 }
-const frontTex = canvasTex(1024, 1024), backTex = canvasTex(1024, 1024), tagTex = canvasTex(512, 256);
+const frontTex = canvasTex(1024, 1024), backTex = canvasTex(1024, 1024);
 const frontMat = new THREE.MeshStandardMaterial({ map: frontTex.t, roughness: 0.94, bumpMap: knit, bumpScale: BUMP });
 const backMat = new THREE.MeshStandardMaterial({ map: backTex.t, roughness: 0.94, bumpMap: knit, bumpScale: BUMP });
-const tagMat = new THREE.MeshStandardMaterial({ map: tagTex.t, roughness: 0.8, side: THREE.DoubleSide });
 
 /* ---------- garment geometry ---------- */
 const T = { W: 2.2, H: 2.35, D: 0.95 };
@@ -667,7 +666,7 @@ function tubeOnChest(pts, radius, segs = 40) {
 }
 
 const hoodie = new THREE.Group();
-let tagMesh;
+const logoAnchor = new THREE.Vector3();   // where the chest logo sits on the hoodie: the "logo" view zooms in on it
 (function buildHoodie() {
   hoodie.add(buildTorso());
   const hem = new THREE.Mesh(ribBand(1.05, 0.44, 0.24, 192, 90, 0.012, 3), fabric);
@@ -719,9 +718,7 @@ let tagMesh;
     const ex = x0 + sway * 0.4; ag.position.set(ex, 0.45, frontZ(ex, 0.45) + 0.028); hoodie.add(ag);
   });
 
-  tagMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.13), tagMat);
-  tagMesh.position.set(0.62, -1.255, 0.432); tagMesh.rotation.set(-0.06, 0.12, 0.015);
-  hoodie.add(tagMesh);
+  logoAnchor.set(0.42, 0.55, frontZ(0.42, 0.55));
 })();
 const BASE_Y = 0.12;
 hoodie.position.y = BASE_Y;
@@ -1023,39 +1020,17 @@ function drawBack() {
   fabricBase(ctx, c.width, c.height); ctx.drawImage(backPrint.c, 0, 0);
   backTex.t.needsUpdate = true;
 }
-function drawTag(ed, sold) {
-  const { ctx, c } = tagTex, W = c.width, H = c.height;
-  ctx.fillStyle = '#EDE9DF'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(0,0,0,.05)'; for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);       // weave
-  for (let x = 0; x < W; x += 4) { ctx.fillStyle = 'rgba(0,0,0,.025)'; ctx.fillRect(x, 0, 1, H); }
-  ctx.strokeStyle = 'rgba(17,17,16,.5)'; ctx.setLineDash([7, 6]); ctx.lineWidth = 2.5; ctx.strokeRect(12, 12, W - 24, H - 24); ctx.setLineDash([]);
-  drawContour(ctx, 174, 84, 104, 104, INK, '#EDE9DF', 1.8, 3);
-  ctx.fillStyle = INK; ctx.textAlign = 'left';
-  ctx.font = '800 52px Rubik'; ctx.fillText('SP076', 156, 96);
-  ctx.font = '600 26px Rubik'; ctx.fillText(`nº ${pad(ed)} / 100`, 158, 140);
-  ctx.font = '300 19px Rubik'; ctx.fillText('500gsm cotton, wash 30°C', 158, 176);
-  ctx.fillText('archive 01, no repress', 158, 204);
-  if (sold) {
-    ctx.save(); ctx.translate(360, 128); ctx.rotate(-0.22); ctx.globalAlpha = 0.88;
-    ctx.strokeStyle = RED; ctx.lineWidth = 7; ctx.strokeRect(-118, -44, 236, 88);
-    ctx.fillStyle = RED; ctx.textAlign = 'center'; ctx.font = '800 64px Rubik'; ctx.fillText('sold', 0, 23);
-    ctx.globalCompositeOperation = 'destination-out'; const r = mulberry(ed);
-    for (let i = 0; i < 260; i++) ctx.fillRect(-125 + r() * 250, -50 + r() * 100, 2 + r() * 3, 2 + r() * 2);
-    ctx.restore();
-  }
-  tagTex.t.needsUpdate = true;
-}
-function redrawGarment() { drawChestPrint(state.ed); drawBackPrint(state.ed); drawFront(); drawBack(); drawTag(state.ed, isSold(state.ed)); drawPreview(); }
+function redrawGarment() { drawChestPrint(state.ed); drawBackPrint(state.ed); drawFront(); drawBack(); drawPreview(); }
 
 /* =========================================================
    REAL HOODIE MODEL (optional)
    Put a .glb file at models/hoodie.glb and it replaces the drawn hoodie.
    The prints are projected onto it as decals. Tune the numbers below if
-   they land in the wrong place: chest/back/tag are [x, y] positions on the
+   they land in the wrong place: chest/back are [x, y] positions on the
    fitted model (scene units, 0,0 = middle of the hoodie, +x = wearer's left),
    lift moves the whole model up/down, turn rotates it to face the camera.
    ========================================================= */
-const MODEL = { url: 'models/hoodie.glb', height: 3.6, width: 4.4, lift: -0.2, turn: 0, chest: [0.3, 0.2], back: [0, -0.12], tag: [0.43, -1.08], chestSize: 0.5, backSize: 1.45 };
+const MODEL = { url: 'models/hoodie.glb', height: 3.6, width: 4.4, lift: -0.2, turn: 0, chest: [0.3, 0.2], back: [0, -0.12], chestSize: 0.5, backSize: 1.45 };
 let modelLoaded = false;
 function loadHoodieModel() {
   if (!THREE.GLTFLoader) return;
@@ -1079,7 +1054,7 @@ function useModel(root) {
     });
   });
   const keep = [hoodie.rotation.clone(), hoodie.position.clone(), hoodie.scale.clone()];
-  hoodie.children.forEach(ch => { if (ch !== tagMesh) ch.visible = false; });
+  hoodie.children.forEach(ch => { ch.visible = false; });
   hoodie.add(root);
   hoodie.rotation.set(0, 0, 0); hoodie.position.set(0, 0, 0); hoodie.scale.set(1, 1, 1); hoodie.updateMatrixWorld(true);
   const ray = new THREE.Raycaster();
@@ -1103,11 +1078,10 @@ function useModel(root) {
       hoodie.add(new THREE.Mesh(out, mat));
     });
   };
-  decal(hit(...MODEL.chest, 1), 0, MODEL.chestSize, chestPrint.t);
+  const chestHit = hit(...MODEL.chest, 1);
+  decal(chestHit, 0, MODEL.chestSize, chestPrint.t);
+  if (chestHit) logoAnchor.copy(chestHit.point);
   decal(hit(...MODEL.back, -1), Math.PI, MODEL.backSize, backPrint.t);
-  const th = hit(...MODEL.tag, 1);
-  // the woven label is printed onto the cloth too, so it follows the hem's folds; the flat one only marks where the camera looks
-  if (th) { decal(th, 0, 0.26, tagTex.t, 0.13); tagMesh.position.copy(th.point); tagMesh.visible = false; }
   [hoodie.rotation, hoodie.position, hoodie.scale].forEach((v, i) => v.copy(keep[i]));
   shadowMesh.position.y = -1.75;
   modelLoaded = true; updateCamTargets();
@@ -1117,21 +1091,20 @@ function useModel(root) {
 let rotY = -0.35, rotX = 0, velY = 0, targetRotX = 0, tweenRot = null, lastInteract = performance.now();
 const drag = { active: false, x: 0, y: 0, lastMove: 0 };
 const camPos = new THREE.Vector3(0, 0.3, 14), camTarget = new THREE.Vector3(), lookCur = new THREE.Vector3(0, -0.2, 0), lookTarget = new THREE.Vector3();
-const TAG_ROT = -0.3;
 const viewSize = () => ({ w: window.innerWidth || canvasEl.clientWidth || 1280, h: window.innerHeight || canvasEl.clientHeight || 720 });
 function baseDist() { const { w, h } = viewSize(), a = w / h; return Math.max(9.6, 4.7 / (2 * Math.tan(THREE.MathUtils.degToRad(15)) * a)); }
 function updateCamTargets() {
   const narrow = viewSize().w < 860;
-  if (state.view === 'tag') {
-    const lx = tagMesh.position.x, ly = tagMesh.position.y, lz = tagMesh.position.z;
-    const x = lx * Math.cos(TAG_ROT) + lz * Math.sin(TAG_ROT), z = -lx * Math.sin(TAG_ROT) + lz * Math.cos(TAG_ROT), y = ly + BASE_Y;
-    camTarget.set(x + 0.2, y + 0.12, z + (modelLoaded ? 3.4 : 2.0)); lookTarget.set(x, y - 0.12, z);
+  if (state.view === 'logo') {
+    // the hoodie turns to face front, so the logo sits straight in front of the camera
+    const { x, y, z } = logoAnchor, d = (modelLoaded ? 2.3 : 2.0) * (narrow ? 1.5 : 1);
+    camTarget.set(x, y + BASE_Y, z + d); lookTarget.set(x, y + BASE_Y - (narrow ? 0.12 : 0), z);
   } else { camTarget.set(0, 0.3, baseDist()); lookTarget.set(0, narrow ? -0.75 : -0.5, 0); }
 }
 function setView(v) {
   state.view = v;
   $$('.vbtn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
-  tweenRot = v === 'front' ? 0 : v === 'back' ? Math.PI : TAG_ROT;
+  tweenRot = v === 'back' ? Math.PI : 0;
   updateCamTargets(); lastInteract = performance.now();
 }
 const shortAngle = (from, to) => { let d = (to - from) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -1139,7 +1112,7 @@ const shortAngle = (from, to) => { let d = (to - from) % (Math.PI * 2); if (d > 
 canvasEl.addEventListener('pointerdown', e => {
   drag.active = true; drag.x = e.clientX; drag.y = e.clientY; drag.lastMove = performance.now();
   tweenRot = null; velY = 0; canvasEl.setPointerCapture(e.pointerId); canvasEl.classList.add('grabbing'); lastInteract = performance.now();
-  if (state.view !== 'tag') $$('.vbtn').forEach(b => b.classList.remove('active'));
+  if (state.view !== 'logo') $$('.vbtn').forEach(b => b.classList.remove('active'));
 });
 canvasEl.addEventListener('pointermove', e => {
   if (!drag.active) return;
@@ -1543,7 +1516,7 @@ window.addEventListener('keydown', e => {
   if (e.target.matches('input, select, textarea')) return;
   if (e.key === 'Escape') { if (state.drawerOpen) openDrawer(false); else if (state.sheetOpen) openSheet(false); return; }
   if (state.drawerOpen) return;
-  if (['1', '2', '3'].includes(e.key)) { setView(['front', 'back', 'tag'][+e.key - 1]); return; }
+  if (['1', '2', '3'].includes(e.key)) { setView(['front', 'back', 'logo'][+e.key - 1]); return; }
   if (e.key === 'ArrowLeft') { e.preventDefault(); setEdition(state.ed - 1); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); setEdition(state.ed + 1); }
   else if (e.key.toLowerCase() === 'm') toggleAudio();
@@ -1560,7 +1533,7 @@ function updatePlatter() {
   _p.set(0, py, 0).project(camera); _q.set(pr, py, 0).project(camera); _r.set(0, py, pr).project(camera);
   const cx = (_p.x + 1) / 2 * w, cy = (1 - _p.y) / 2 * h;
   const kx = Math.abs(_q.x - _p.x) / 2 * w / 480, ky = Math.max(0.05, Math.abs(_r.y - _p.y) / 2 * h / 96);
-  platter.style.opacity = state.view === 'tag' ? 0 : 1; shadowMesh.visible = state.view !== 'tag';
+  platter.style.opacity = state.view === 'logo' ? 0 : 1; shadowMesh.visible = state.view !== 'logo';
   platter.style.transform = `translate(${cx - 500 * kx}px, ${cy - 110 * ky}px) scale(${kx}, ${ky})`;
   // big loud-mode letters sit just left of the hoodie's shoulder, tucked under it a little
   const pin = w > 860;
@@ -1582,7 +1555,7 @@ function tick(forceDt) {
       if (Math.abs(d) < 0.002) { rotY = tweenRot; tweenRot = null; }
     } else {
       rotY += velY * k; velY *= Math.pow(0.93, k);
-      if (performance.now() - lastInteract > 6000 && state.view !== 'tag') velY += (0.003 - velY) * 0.02 * k;
+      if (performance.now() - lastInteract > 6000 && state.view !== 'logo') velY += (0.003 - velY) * 0.02 * k;
     }
     targetRotX *= Math.pow(0.97, k);
   }
